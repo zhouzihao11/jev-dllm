@@ -1,0 +1,36 @@
+{
+  "schema_version": "full_eval_v1",
+  "profile_id": "TEMPLATE_NOT_READY_REPLACE_WITH_LOCAL_PROFILE_ID",
+  "preparation_status": "not_ready_no_fixtures_no_code_bundle_no_stub",
+  "sources": {
+    "typed_decisions": {"path": "data/typed_decisions_test.parquet", "format": "parquet", "split": "test", "rows": 400, "decisions": 2000},
+    "ag_news": {"path": "data/ag_news_test.jsonl", "format": "jsonl", "split": "test", "rows": 7600, "decisions": 7600},
+    "emotion": {"path": "data/emotion_test.jsonl", "format": "jsonl", "split": "test", "rows": 2000, "decisions": 2000},
+    "banking77": {"path": "data/banking77_test.csv", "format": "csv", "split": "test", "rows": 3080, "decisions": 3080},
+    "prompt_injection": {"path": "data/prompt_injection_test.parquet", "format": "parquet", "split": "test", "rows": 116, "decisions": 116},
+    "sst5": {"path": "data/sst5_test.jsonl", "format": "jsonl", "split": "test", "rows": 2210, "decisions": 2210},
+    "internal_s0": {"path": "data/internal_s0_test.jsonl", "format": "jsonl", "split": "internal_test", "rows": 1000, "decisions": 1000}
+  },
+  "limits": {
+    "ag_news_test_limit": 0,
+    "emotion_test_limit": 0,
+    "banking_test_limit": 0,
+    "sst5_test_limit": 0
+  },
+  "protocol": {
+    "max_length": 4096,
+    "temperature": 1.0,
+    "laya_primary": "aligned_unit",
+    "laya_references": ["aligned_sdk_temperature", "sdk_unit", "sdk_native"]
+  },
+  "runtime": {
+    "python": "REPLACE_WITH_ABSOLUTE_PYTHON_EXECUTABLE",
+    "home": "REPLACE_WITH_ABSOLUTE_RUNTIME_HOME",
+    "hf_home": "REPLACE_WITH_ABSOLUTE_HF_HOME",
+    "dllm_stub": "support/dllm_stub"
+  },
+  "code": {
+    "path": "code",
+    "commit": "REPLACE_WITH_ACTUAL_SUPPLIED_SNAPSHOT_VERSION"
+  }
+}

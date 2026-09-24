@@ -1,0 +1,21 @@
+{
+  "seed": 42,
+  "synthetic_seed": 1042,
+  "synthetic_candidates_per_pool": 15000,
+  "max_records_per_source": 30000,
+  "near_duplicate_threshold": 0.85,
+  "near_duplicate_max_postings": 2000,
+  "near_duplicate_max_candidates": 256,
+  "quotas": {
+    "dbpedia": {"train": 6000, "dev": 400},
+    "snli_choice": {"train": 4000, "dev": 267},
+    "snli_noul": {"train": 2000, "dev": 133},
+    "clinc": {"train": 3000, "dev": 200},
+    "sgd": {"train": 3000, "dev": 200},
+    "goemotions": {"train": 3000, "dev": 200},
+    "boolq": {"train": 4000, "dev": 267},
+    "synthetic_ordinal": {"train": 3000, "dev": 200},
+    "synthetic_constraints": {"train": 1000, "dev": 67},
+    "synthetic_probability": {"train": 1000, "dev": 66}
+  }
+}

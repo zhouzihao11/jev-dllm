@@ -1,0 +1,11 @@
+# Observed research environment, not a complete or independently tested lockfile.
+# Install torch separately for the chosen accelerator; see docs/reproduce.md.
+transformers==4.57.0
+tokenizers==0.22.2
+pandas==2.3.3
+pyarrow==24.0.0
+datasets==4.8.5
+# Exact observed NumPy / safetensors / Hub versions were not recorded.
+numpy>=1.20.0
+safetensors>=0.4.0
+huggingface_hub>=0.20.0
