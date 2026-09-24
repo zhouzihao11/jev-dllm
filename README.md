@@ -1,4 +1,4 @@
-# Shared Yes/No DLLM
+# Jev-DLLM: Shared Yes/No Decision Models
 
 在每个候选旁放置一个 mask，用 masked diffusion language model 的共享 Yes/No 权重一次前向得到结构化概率，支持动态选择、二元判断和有序评分。
 本仓库提供 S0/S1 数据、监督训练和六套外部评测入口；方法与实验结果见[中文博客](docs/blog_zh.md)。
