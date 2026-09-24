@@ -140,7 +140,7 @@ Filtered or quota-surplus candidates are not added to the new-content index.
 S0 train collisions against full external fixture text are stripped only from
 the new train file, with original candidate IDs and reasons in `rejections.jsonl`.
 S0 dev is always copied byte-for-byte, even if audit collisions exist; the report
-then carries an explicit dev-collision warning for the parent to review.
+then carries an explicit dev-collision warning for the maintainer to review.
 `requires_parent_dev_collision_review=true` and
 `heldout_safety=requires_parent_review_of_unchanged_s0_dev` explicitly flag dev
 collisions; a completed build is not approval to treat that dev as heldout-safe.

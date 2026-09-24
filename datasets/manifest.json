@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "release_id": "s0_s1_full_bench_v1",
+  "distribution": "Private repository inclusion authorized by data owner; not a public redistribution license clearance. Code Apache-2.0 does not relicense data.",
+  "quality_profile_origin": "full_test_v1_20260923_r2",
+  "source_code_versions": {
+    "training": "80efa54951000a7b6f1637ea2bf146332540f9e2",
+    "quality_evaluator": "fb672477594f29681b90d13ec679819ab8033c5c"
+  },
+  "files": [
+    {
+      "path": "s0/train.jsonl.gz",
+      "output_path": "s0/canonical/train.jsonl",
+      "compression": "gzip",
+      "format": "jsonl",
+      "rows": 10000,
+      "decisions": 10000,
+      "bytes": 2389424,
+      "uncompressed_bytes": 20384041
+    },
+    {
+      "path": "s0/dev.jsonl.gz",
+      "output_path": "s0/canonical/dev.jsonl",
+      "compression": "gzip",
+      "format": "jsonl",
+      "rows": 1000,
+      "decisions": 1000,
+      "bytes": 236864,
+      "uncompressed_bytes": 1970985
+    },
+    {
+      "path": "s0/test.jsonl.gz",
+      "output_path": "s0/canonical/test.jsonl",
+      "compression": "gzip",
+      "format": "jsonl",
+      "rows": 1000,
+      "decisions": 1000,
+      "bytes": 246089,
+      "uncompressed_bytes": 2043035
+    },
+    {
+      "path": "s1/train.jsonl.gz",
+      "output_path": "s1/canonical/train.jsonl",
+      "compression": "gzip",
+      "format": "jsonl",
+      "rows": 40000,
+      "decisions": 40000,
+      "bytes": 11119583,
+      "uncompressed_bytes": 86126684
+    },
+    {
+      "path": "s1/diagnostic_dev.jsonl.gz",
+      "output_path": "s1/canonical/new_dev.jsonl",
+      "compression": "gzip",
+      "format": "jsonl",
+      "rows": 2000,
+      "decisions": 2000,
+      "bytes": 590555,
+      "uncompressed_bytes": 4395164
+    },
+    {
+      "path": "bench/ag_news_test.jsonl.gz",
+      "output_path": "bench/ag_news_test.jsonl",
+      "compression": "gzip",
+      "format": "jsonl",
+      "rows": 7600,
+      "decisions": 7600,
+      "bytes": 758347,
+      "uncompressed_bytes": 1980697
+    },
+    {
+      "path": "bench/emotion_test.jsonl.gz",
+      "output_path": "bench/emotion_test.jsonl",
+      "compression": "gzip",
+      "format": "jsonl",
+      "rows": 2000,
+      "decisions": 2000,
+      "bytes": 75809,
+      "uncompressed_bytes": 243173
+    },
+    {
+      "path": "bench/sst5_test.jsonl.gz",
+      "output_path": "bench/sst5_test.jsonl",
+      "compression": "gzip",
+      "format": "jsonl",
+      "rows": 2210,
+      "decisions": 2210,
+      "bytes": 100726,
+      "uncompressed_bytes": 342783
+    },
+    {
+      "path": "bench/banking77_test.csv.gz",
+      "output_path": "bench/banking77_test.csv",
+      "compression": "gzip",
+      "format": "csv",
+      "rows": 3080,
+      "decisions": 3080,
+      "bytes": 51140,
+      "uncompressed_bytes": 239961
+    },
+    {
+      "path": "bench/typed_decisions_test.parquet",
+      "output_path": "bench/typed_decisions_test.parquet",
+      "compression": "none",
+      "format": "parquet",
+      "rows": 400,
+      "decisions": 2000,
+      "bytes": 222140,
+      "uncompressed_bytes": 222140
+    },
+    {
+      "path": "bench/prompt_injection_test.parquet",
+      "output_path": "bench/prompt_injection_test.parquet",
+      "compression": "none",
+      "format": "parquet",
+      "rows": 116,
+      "decisions": 116,
+      "bytes": 10892,
+      "uncompressed_bytes": 10892
+    }
+  ],
+  "copies": [
+    {
+      "source": "s0/canonical/dev.jsonl",
+      "output_path": "s1/canonical/dev.jsonl"
+    },
+    {
+      "source": "s0/canonical/test.jsonl",
+      "output_path": "bench/internal_s0_test.jsonl"
+    }
+  ],
+  "upstreams": {
+    "clinc": {
+      "upstream": "clinc/oos-eval",
+      "revision": "828f8093932c8fe6ca7936c3d2e52903b1c523de",
+      "license": "CC BY 3.0 Unported; upstream LICENSE declaration, not independent legal verification.",
+      "original_split": "train",
+      "captured_license": "source_cards/s0_clinc_LICENSE.txt"
+    },
+    "snli": {
+      "upstream": "https://nlp.stanford.edu/projects/snli/snli_1.0.zip",
+      "revision": "Stanford SNLI 1.0 original release (not a Git revision)",
+      "license": "CC BY-SA 4.0 International; official Stanford SNLI page declaration captured by parent on 2026-09-23, not independent legal review.",
+      "original_split": "train",
+      "captured_license": "source_cards/s0_snli_official_page_declaration.txt"
+    },
+    "arc": {
+      "upstream": "allenai/ai2_arc",
+      "revision": "210d026faf9955653af8916fad021475a3f00453",
+      "license": "CC BY-SA 4.0; upstream Hugging Face dataset card declaration, not independent legal verification.",
+      "original_split": "train",
+      "captured_license": "source_cards/s0_arc_README.md"
+    },
+    "sgd": {
+      "upstream": "google-research-datasets/dstc8-schema-guided-dialogue",
+      "revision": "e852981ae34990f4358979625854259302feaa78",
+      "license": "CC BY-SA 4.0 International; upstream LICENSE and README declaration, not independent legal verification.",
+      "original_split": "train",
+      "captured_license": "source_cards/s0_sgd_LICENSE.txt"
+    },
+    "dbpedia": {
+      "upstream": "https://huggingface.co/datasets/fancyzhx/dbpedia_14",
+      "repository": "fancyzhx/dbpedia_14",
+      "revision": "9abd46cf7fc8b4c64290f26993c540b92aa145ac",
+      "license": "cc-by-sa-3.0",
+      "license_declaration": "Retained upstream dataset card declaration; no standalone license file supplied. Card also describes GNU Free Documentation License for DBpedia content; preserve both CC-BY-SA 3.0 and GNU FDL usage caveats.",
+      "annotation_provenance": "Preexisting machine-generated ontology annotations; no newly invoked generator",
+      "original_split": "train",
+      "captured_card": "source_cards/s1_dbpedia.README.md"
+    },
+    "goemotions": {
+      "upstream": "https://huggingface.co/datasets/google-research-datasets/go_emotions",
+      "repository": "google-research-datasets/go_emotions",
+      "revision": "add492243ff905527e67aeb8b80c082af02207c3",
+      "license": "apache-2.0",
+      "license_declaration": "Retained upstream dataset card declaration; no standalone license file supplied. ",
+      "annotation_provenance": "Original upstream annotations, unchanged",
+      "original_split": "train",
+      "captured_card": "source_cards/s1_goemotions.README.md"
+    },
+    "boolq": {
+      "upstream": "https://huggingface.co/datasets/google/boolq",
+      "repository": "google/boolq",
+      "revision": "35b264d03638db9f4ce671b711558bf7ff0f80d5",
+      "license": "cc-by-sa-3.0",
+      "license_declaration": "Retained upstream dataset card declaration; no standalone license file supplied. ",
+      "annotation_provenance": "Original upstream annotations, unchanged",
+      "original_split": "train",
+      "captured_card": "source_cards/s1_boolq.README.md"
+    },
+    "bench_ag_news": {
+      "split": "test",
+      "rows": 7600,
+      "decisions": 7600
+    },
+    "bench_emotion": {
+      "split": "test",
+      "rows": 2000,
+      "decisions": 2000
+    },
+    "bench_typed_decisions": {
+      "split": "test",
+      "rows": 400,
+      "decisions": 2000
+    },
+    "bench_prompt_injection": {
+      "split": "test",
+      "rows": 116,
+      "decisions": 116
+    },
+    "bench_sst5": {
+      "split": "test",
+      "rows": 2210,
+      "decisions": 2210
+    },
+    "bench_banking77": {
+      "split": "test",
+      "rows": 3080,
+      "decisions": 3080
+    }
+  },
+  "source_cards": [
+    "source_cards/s0_clinc_LICENSE.txt",
+    "source_cards/s0_snli_official_page_declaration.txt",
+    "source_cards/s0_arc_README.md",
+    "source_cards/s0_sgd_LICENSE.txt",
+    "source_cards/s1_dbpedia.README.md",
+    "source_cards/s1_goemotions.README.md",
+    "source_cards/s1_boolq.README.md",
+    "source_cards/bench_banking77_README.md",
+    "source_cards/bench_cards_ag_news_README.md",
+    "source_cards/bench_cards_emotion_README.md",
+    "source_cards/bench_cards_prompt_injection_README.md",
+    "source_cards/bench_cards_sst5_README.md",
+    "source_cards/bench_cards_typed_decisions_README.md",
+    "source_cards/bench_sst5_README.md"
+  ],
+  "notes": [
+    "Original canonical text/labels/order preserved byte-for-byte after decompression.",
+    "S1 full train equals S0 train followed by 30000 added decisions.",
+    "Original S0 dev is checkpoint-selection dev; S1 new_dev is diagnostic only.",
+    "Six external sources excluded from supervised training; source-heldout is not a pretraining-contamination guarantee.",
+    "No raw upstream training archives, model weights, predictions or runtime credentials bundled.",
+    "Personal-information and public-redistribution review is not exhaustive; keep repository private pending review."
+  ],
+  "size_bytes": 15801569,
+  "external_decisions": 17006,
+  "verification": {
+    "gzip_roundtrip_byte_equal": true,
+    "preparation_helper_output_byte_equal": true,
+    "jsonl_csv_rows_verified": true,
+    "parquet_rows_and_typed_decisions_verified": true,
+    "all_counts_verified": true,
+    "known_private_execution_markers_found": 0,
+    "scope": "No exhaustive personal-information/legal audit; no model/runtime evaluation performed."
+  }
+}

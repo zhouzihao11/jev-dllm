@@ -1,0 +1,10 @@
+SNLI official page license declaration — captured quotation, not a complete page snapshot
+URL: https://nlp.stanford.edu/projects/snli/
+Access date: 2026-09-23
+Provenance: Parent reports fetching the official page using webfetch on this date; quotation supplied to remote resource agent.
+
+Exact quotation:
+The Stanford Natural Language Inference Corpus by The Stanford NLP Group is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
+
+Scope: Upstream official CC BY-SA 4.0 International declaration; no independent legal review asserted. Parent also reports page acknowledgments of Flickr30k and approximately 4,000 vg_ pilot training examples.
+Historical note: Archive README describes Flickr30k premises as CC Attribution-ShareAlike without specifying a version; preserved unchanged at snli/archive_docs/README.txt and licenses/snli_README.txt.

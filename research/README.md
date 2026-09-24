@@ -16,7 +16,9 @@
 | `scripts/run_full_benchmark.py` | 执行用户提供的 bundle/profile；不内置历史快照 |
 | `scripts/bench_ar_matrix.py`、`scripts/bench_matrix.py`、`scripts/bench_local.py` | 必需的 suite/metrics/SDK 依赖闭包；各自 CLI 是 legacy optional，不是本研究主配方 |
 
-保留 legacy 代码是为了维持实际导入关系和原语义；其中 Jev 引用分数不是本项目重新测量的结果。旧 trainer 的 RLCD/identifier 模式也保留，但不代表本文训练条件。没有复制旧下载器或依赖原机器缓存的 bundle 构建工具；prepared 来源由使用者按契约单独准备。
+保留 legacy 代码是为了维持实际导入关系和原语义；其中 Jev 引用分数不是本项目重新测量的结果。旧 trainer 的 RLCD/identifier 模式也保留，但不代表本文训练条件。没有复制旧下载器或依赖原机器缓存的 bundle 构建工具。从来源重建时，raw/prepared 来源由使用者按契约单独准备；使用私有包 canonical 训练/评测不需要 raw 上游。
+
+在仓库根运行 `python scripts/prepare_datasets.py --output-dir "$PWD/local_data"` 解压已随私有仓库收录的数据（不是 `research/scripts/` 下的脚本）。S0/S1 训练路径见[根 README](../README.md)，六套外部 fixtures 在 `local_data/bench`，内部测试另报。helper 无网络/模型依赖，不生成 runtime profile；远端数据准备、与原文件逐字节比对及独立 Parquet 计数验证已完成，划分与 schema 不变。模型训练/评测未重跑，完整模型流水线仍未验证。私有纳入不是公开许可确认，也不包含权重、custom code/stub 或历史冻结代码 bundle。
 
 `bench_local.py` 原本已使用用户 HOME 下的 `~/laya_models`，没有固定用户名。本副本增加 `LAYA_MODEL_ROOT` 环境覆盖，仍可用已有 `--model-root` CLI。其他模型/数据/输出路径均通过现有参数提供。
 

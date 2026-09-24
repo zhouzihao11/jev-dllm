@@ -1,8 +1,8 @@
 # 数据与模型准备
 
-**本首版提供 prepared 输入契约，不提供 raw 到 prepared 的完整获取/导出工具。** 旧下载器有原机器授权目录限制，因此没有复制；不绕过其限制，也不宣称已有一键下载。数据、模型另行发布的计划尚未交付任何文件，许可未确认的资产不捆绑。
+**本私有版本已包含 S0/S1 canonical 与六套全量冻结评测 fixtures，不包含完整 raw 上游 train 或 raw 到 prepared 的完整获取/导出工具。** 有 GitHub 私有仓库访问权限后，通过 `git clone` / `git pull` 获取本版本即包含数据，无需额外下载。用户已授权私有纳入，不等于公开再分发许可确认。标准库解压入口与路径见[数据包说明](../datasets/README.md)；远端数据准备、与原研究文件逐字节比对及独立 Parquet 计数验证已于 2026-09-24 完成，未改变划分或 schema。旧下载器没有复制；只有从来源重建才需要单独获取 raw/prepared。模型权重、custom code/stub 和历史冻结代码 bundle 仍不提供，完整模型流水线未验证。
 
-所有 `$DATA_ROOT`、`$MODEL_DIR`、`$OUTPUT_ROOT` 由使用者设为仓库外合法路径。保留原始 train 文件、revision、标签元数据、原始顺序及 ID，导出后逐行对照原字段和标签映射。只有取得合法访问权后才准备资源。
+所有 `$DATA_ROOT`、`$MODEL_DIR`、`$OUTPUT_ROOT` 由使用者设为真实合法路径；DATA_ROOT 可使用忽略的 `local_data/`，模型与输出留在仓库外。下述 S0/S1 raw/prepared 契约仅用于从来源重建，不是训练/评测已打包 canonical 的前置要求。重建时保留原始 train 文件、revision、标签元数据、原始顺序及 ID，导出后逐行对照原字段和标签映射。只有取得合法访问权后才准备资源。
 
 ## S0 prepared contract
 
@@ -41,7 +41,7 @@ S1 还需要完整的 S0 canonical train/dev/test、source_manifest、build_mani
 
 ## 外部评测 fixtures 与 profile
 
-保持官方 test 全量、原始行顺序和重复行；不能用 train 补数量。各来源版本尚未全部对外锁定，这也是精确历史复现缺口。
+私有包提供下表全部 fixtures，准备到 `$DATA_ROOT/bench`（内部测试从 S0 test 复制）。保持原研究冻结文件的全量、原始行顺序和重复行；不能用 train 补数量。捕获版本与材料见 [manifest](../datasets/manifest.json) 和[14 份来源卡片](../datasets/SOURCES.md)；来源卡片不是完整法律审查，历史模型流水线仍未独立复现。
 
 | fixture | 字段/标签契约 | 参考行数 / 决策数 |
 |---|---|---|
@@ -53,11 +53,11 @@ S1 还需要完整的 S0 canonical train/dev/test、source_manifest、build_mani
 | `sst5_test.jsonl` | text、label 0..4：very negative/negative/neutral/positive/very positive | 2,210 / 2,210 |
 | `internal_s0_test.jsonl` | S0 canonical test，不是 S1 new_dev | 1,000 / 1,000 |
 
-外部合计 17,006，内部另计。S1 exclusion audit 读取六来源完整文本而非评测前缀，声明行数必须与文件一致。来源策略是禁止六来源所有 split；文本审计只能覆盖实际供应的 fixtures，不证明预训练零污染。
+数据准备验证已核实外部合计 17,006 决策、内部另计 1,000 决策；这不是本次重新运行模型评测。helper 验证 JSONL/CSV 行数，对 Parquet 仅输出声明；本版本另以 PyArrow 验证两份 Parquet 的实际计数。S1 exclusion audit 读取六来源完整文本而非评测前缀，声明行数必须与文件一致。来源策略是禁止六来源所有 split；文本审计只能覆盖实际供应的 fixtures，不证明预训练零污染。
 
-`full_eval_profile.template.json` **不是 ready profile**：它只有字段结构、相对路径和协议参考数量，没有 fixtures/code/stub。JSON 不会展开 `$VAR` 或 `~`。在仓库外建立 bundle 并编辑本地 profile：`runtime.python`、`runtime.home`、`runtime.hf_home` 替换成执行机真实绝对路径；code.path、runtime.dllm_stub 和 sources.*.path 都是相对 profile 目录的路径，不得绝对或包含 `..`。
+`full_eval_profile.template.json` **不是 ready profile**：它只有字段结构、相对路径和协议参考数量。私有包提供全部 fixtures，但不提供 code/stub/runtime。直接 CLI 使用 `$DATA_ROOT/bench`，不需要 profile。可选 runner 需在仓库外建立 bundle，复制六个外部 fixtures 及内部 S0 test，手工适配 sources 路径。JSON 不会展开 `$VAR` 或 `~`；helper 不生成 profile。`runtime.python`、`runtime.home`、`runtime.hf_home` 替换成执行机真实绝对路径；code.path、runtime.dllm_stub 和 sources.*.path 都是相对 profile 目录的路径，不得绝对或包含 `..`。
 
-历史冻结质量需资源所有者单独提供 `fb672477594f29681b90d13ec679819ab8033c5c` 对应的合法源码 bundle 与原 fixtures；本仓库不含该快照。若改用本发布版源码，必须填写新的实际版本与不同 profile_id，称为新评测而非历史冻结复现。`code.commit` 只是记录字段，runner 不验证它与目录内容相符，使用者须如实填写。不要仅改字段冒充冻结版本。
+历史冻结质量需资源所有者单独提供 `fb672477594f29681b90d13ec679819ab8033c5c` 对应的合法源码 bundle；私有包提供冻结 fixtures，但本仓库不含该代码快照。若改用本发布版源码，必须填写新的实际版本与不同 profile_id，称为新评测而非历史冻结复现。`code.commit` 只是记录字段，runner 不验证它与目录内容相符，使用者须如实填写。不要仅改字段冒充冻结版本。
 
 ## 模型准备与阻塞项
 
