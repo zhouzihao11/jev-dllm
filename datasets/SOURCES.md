@@ -1,6 +1,6 @@
 # 数据来源、归属与捕获卡片
 
-[manifest.json](manifest.json) 记录本包的上游元数据、版本、协议说明及 `source_cards` 清单。以下 14 份捕获文件已随私有仓库提供；上游链接用于归属与条款核查，不是准备本包数据的额外下载步骤。卡片是捕获的来源声明，不是完整法律审查。原 revision 表与转换规则保留在[数据与模型说明](../docs/data_and_models.md)。
+[manifest.json](manifest.json) 记录上游元数据、版本、协议说明及 `source_cards` 清单。以下 14 份捕获文件随公开数据提供；上游链接用于归属与核对来源信息，不是准备本包数据的额外下载步骤。原 revision 表与转换规则见[数据与模型说明](../docs/data_and_models.md)。
 
 | 用途 / 来源 | 上游归属 | 已收录的来源材料 |
 |---|---|---|
@@ -20,4 +20,4 @@
 
 S0/S1 还包含程序生成的规则、状态和概率任务，其构建代码位于 `research/scripts/`。公共来源沿用既有标注，没有调用生成式 API 重新标注。打包保留原研究 canonical 和冻结 fixtures 的字节内容、顺序、划分与 schema，不是再次构建或重新划分数据。该包不是完整 raw 上游训练档案，也不替代上游通知义务。
 
-许可声明与未决项见[第三方表](../THIRD_PARTY.md)和[LICENSES](LICENSES.md)。准备 helper 不联网获取新 revision 或卡片，也不作法律判断；完成数据计数和字节验证不代表完成个人信息或公开再分发审查。
+许可信息见[第三方表](../THIRD_PARTY.md)和[LICENSES](LICENSES.md)。准备 helper 不联网获取新 revision 或卡片；数据计数和字节验证不改变各来源的许可条款。

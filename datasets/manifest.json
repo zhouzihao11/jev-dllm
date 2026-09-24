@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "release_id": "s0_s1_full_bench_v1",
-  "distribution": "Private repository inclusion authorized by data owner; not a public redistribution license clearance. Code Apache-2.0 does not relicense data.",
+  "distribution": "Bundled with the public jev-dllm repository; source information is in datasets/SOURCES.md.",
   "quality_profile_origin": "full_test_v1_20260923_r2",
   "source_code_versions": {
     "training": "80efa54951000a7b6f1637ea2bf146332540f9e2",

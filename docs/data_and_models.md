@@ -1,12 +1,12 @@
 # 从来源重建数据：raw/prepared 参考
 
-使用已打包 canonical 训练与评测，请直接按[根 README](../README.md)操作；模型下载也在该入口。本文仅供从来源重新构建数据，不要求主流程先准备 raw/prepared。完整上游 train 和 raw 到 prepared 的获取/导出工具不随仓库提供。
+日常训练与评测见[根 README](../README.md)；本文供需要调整数据构建的人参考。完整上游 train 的获取与 raw-to-prepared 导出需自行准备。
 
 重建时将 `$DATA_ROOT` 设为独立的新目录，沿用 README 中的 `$BASE_MODEL`。保留原始 train 文件、revision、标签元数据、顺序及 ID，导出后逐行对照字段和标签映射。
 
 ## S0 prepared contract
 
-`$DATA_ROOT/s0_sources/source_manifest.json` 应含 `sources` 对象，四个条目 `clinc/snli/arc/sgd` 各有非空 `revision` 和 `license` 或 `license_declaration`。建议同时记录官方 URL、config、train split 和稳定 ID 生成规则；这些声明不会被构建器当作独立法律批准。
+`$DATA_ROOT/s0_sources/source_manifest.json` 应含 `sources` 对象，四个条目 `clinc/snli/arc/sgd` 各有非空 `revision` 和 `license` 或 `license_declaration` 字段。记录 URL、config、train split 和稳定 ID 生成规则。
 
 | 文件（相对 s0_sources） | 必需内容 |
 |---|---|
@@ -16,9 +16,9 @@
 | `prepared/sgd_train.jsonl` | 原对话对象含 `dialogue_id`, `services`, `turns`；turn 保留 speaker/utterance/frames，USER frame 保留 service/state.active_intent |
 | `prepared/sgd_schema.json` | 原服务列表，含 service_name/description/intents，每个 intent 含 name/description |
 
-原研究版本记录：CLINC `828f8093932c8fe6ca7936c3d2e52903b1c523de`；SNLI 1.0 原始 release；ARC `210d026faf9955653af8916fad021475a3f00453`；SGD `e852981ae34990f4358979625854259302feaa78`。来源链接和许可见 [THIRD_PARTY](../THIRD_PARTY.md)。这些记录不是本次重新下载验证。
+原研究版本：CLINC `828f8093932c8fe6ca7936c3d2e52903b1c523de`；SNLI 1.0 原始 release；ARC `210d026faf9955653af8916fad021475a3f00453`；SGD `e852981ae34990f4358979625854259302feaa78`。
 
-同一文件内稳定 ID 不应重复。可附 `split`/`original_split`，存在时必须为 train。没有 ID 的来源必须固定源文件版本和行顺序后使用零基行号，不能导出时随机生成。缺少 split 字段不会证明来源确为 train。
+同一文件内稳定 ID 不应重复。可附 `split`/`original_split`，存在时必须为 train。没有 ID 的来源需固定源文件版本和行顺序后使用零基行号。
 
 ## S1 raw 到 prepared contract
 
@@ -35,7 +35,7 @@
 - `dbpedia_train.jsonl`：`record_id/title/content/label` 均为字符串；`dbpedia_labels.json` 是原 14 类有序名称列表。
 - `goemotions_train.jsonl`：字符串 `record_id/text`，`labels` 为字符串列表；`goemotions_labels.json` 是原 27 情绪加 neutral 的有序名称列表。构建器只选单标签，原导出仍保留多标签。
 - `boolq_train.jsonl`：字符串 `record_id/passage/question`、布尔 `answer`、可选字符串 `title`。禁止将字符串 `"false"` 用 Python truthiness 转成 True。
-- `$DATA_ROOT/s1_sources/source_manifest.json`：`sources.dbpedia/goemotions/boolq` 各含非空 revision、upstream、license 或 license_declaration；不得用占位值冒充真实来源记录。
+- `$DATA_ROOT/s1_sources/source_manifest.json`：`sources.dbpedia/goemotions/boolq` 各含非空 revision、upstream、license 或 license_declaration 字段。
 
 S1 还需要完整的 S0 canonical train/dev/test、source_manifest、build_manifest；S0 的构建 seed 必须保留，S1 synthetic_seed 与之不同。复用的 SNLI/CLINC/SGD prepared revision 必须与 S0 相同。详细规则见 [S1_DATA_BUILDER](../research/S1_DATA_BUILDER.md)。
 
@@ -53,7 +53,7 @@ S1 还需要完整的 S0 canonical train/dev/test、source_manifest、build_mani
 | `sst5_test.jsonl` | text、label 0..4：very negative/negative/neutral/positive/very positive | 2,210 / 2,210 |
 | `internal_s0_test.jsonl` | S0 canonical test，不是 S1 new_dev | 1,000 / 1,000 |
 
-S1 exclusion audit 读取六来源完整文本而非评测前缀，声明行数必须与文件一致。来源策略是禁止六来源所有 split；文本审计只能覆盖实际供应的 fixtures，不证明预训练零污染。
+S1 构建器读取六套外部 fixtures 的完整文本做排除检查，声明行数须与文件一致；外部来源各 split 均不用于监督训练。
 
 S1 builder 的 `--heldout-profile` 使用 [profile 模板](full_eval_profile.template.json)中的 sources 路径读取这些输入；先按实际目录适配，JSON 不展开 shell 变量。可选模型 runner 的 code/runtime 配置见[高级用法](reproduce.md)。
 
@@ -78,6 +78,6 @@ python research/scripts/build_shared_yesno_s1.py \
   --output-dir "$DATA_ROOT/s1" --config research/s1_data_config.json
 ```
 
-两个 builder 都有 `--smoke`，应使用单独输出目录；S1 smoke 仍需要完整 S0 和外部 fixtures。S0 拒绝非空输出目录，S1 要求全新目录，报告父目录须存在。构建只加载 tokenizer，不加载模型权重。
+两个 builder 都有 `--smoke`，需单独输出目录；S1 smoke 仍需要完整 S0 和外部 fixtures。S0 拒绝非空输出目录，S1 要求全新目录，报告父目录须存在。构建只加载 tokenizer。
 
 S0 目标 train/dev/test 为 10,000/1,000/1,000；S1 请求新增 train 30,000（公共 25,000 + 合成 5,000）与诊断 dev 2,000。实际数量取决于碰撞/短缺报告；`requires_parent_dev_collision_review` 需要审查，不能静默修改原 dev。S0 标签检查器不适用于完整 S1；S1 使用构建器中的标注映射与独立 solver。

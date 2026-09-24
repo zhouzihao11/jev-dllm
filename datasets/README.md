@@ -6,7 +6,7 @@
 python scripts/prepare_datasets.py --output-dir "$PWD/local_data"
 ```
 
-仅需 Python 标准库，无需网络或模型。目标目录必须不存在；仓库内使用忽略的 `local_data/`，另存到仓库外也可。`--dataset-dir` 可指定另一份资产目录。训练与评测不直接读取 `.gz`。
+仅需 Python 标准库；目标目录必须不存在。`--dataset-dir` 可指定另一份资产目录。训练与评测读取解压后的文件。
 
 ## 准备后的文件
 
@@ -30,6 +30,6 @@ python scripts/prepare_datasets.py --output-dir "$PWD/local_data"
 
 S1 train 已包含 S0 train。S1 选优 dev 与内部 test 分别复制 S0 dev/test；`new_dev` 仅诊断。六套外部共 17,006 个决策，内部 1,000 个另报。
 
-包内数据约 15.1 MiB，解压约 112.5 MiB，另加两份 canonical 复制。文件映射、计数和已有验证记录见 [manifest.json](manifest.json)；helper 校验 JSONL/CSV 行数，对 Parquet 只复制并显示声明计数，独立 Parquet 验证记录在 manifest 中。
+文件映射与计数见 [manifest.json](manifest.json)。
 
-训练与全量评测见[快速开始](../README.md)，字段格式见 [schema](../docs/SCHEMA.md)，从原来源重建见[构建参考](../docs/data_and_models.md)。数据来源与许可分别见 [SOURCES](SOURCES.md) 和 [LICENSES](LICENSES.md)。
+训练与全量评测见[快速开始](../README.md)，字段格式见 [schema](../docs/SCHEMA.md)，从来源重建见[构建参考](../docs/data_and_models.md)。
