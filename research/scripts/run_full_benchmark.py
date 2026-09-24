@@ -1,4 +1,4 @@
-"""Run existing evaluators against a frozen full_eval_v1 bundle (no training)."""
+"""Run existing evaluators with prepared local data or a frozen full_eval_v1 bundle."""
 
 import argparse
 import json
@@ -13,6 +13,49 @@ SOURCES = ("typed_decisions", "ag_news", "emotion", "banking77",
 LIMITS = ("ag_news_test_limit", "emotion_test_limit", "banking_test_limit",
           "sst5_test_limit")
 REFERENCES = ("aligned_sdk_temperature", "sdk_unit", "sdk_native")
+BENCHMARK_DEFAULTS = {
+    "typed_decisions": ("typed_decisions_test.parquet", "parquet", 400, 2000),
+    "ag_news": ("ag_news_test.jsonl", "jsonl", 7600, 7600),
+    "emotion": ("emotion_test.jsonl", "jsonl", 2000, 2000),
+    "banking77": ("banking77_test.csv", "csv", 3080, 3080),
+    "prompt_injection": ("prompt_injection_test.parquet", "parquet", 116, 116),
+    "sst5": ("sst5_test.jsonl", "jsonl", 2210, 2210),
+    "internal_s0": ("internal_s0_test.jsonl", "jsonl", 1000, 1000),
+}
+
+
+def prepared_config(data_root):
+    code = Path(__file__).resolve().parents[2]
+    stub = code / "support" / "dllm_stub"
+    sources = {name: data_root / "bench" / spec[0]
+               for name, spec in BENCHMARK_DEFAULTS.items()}
+    for path in sources.values():
+        if not path.is_file():
+            raise ValueError("missing source file: " + str(path))
+    if not stub.is_dir():
+        raise ValueError("missing support/dllm_stub: " + str(stub))
+    commit = "unknown"
+    if (code / ".git").exists():
+        try:
+            result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=code,
+                                    capture_output=True, text=True, check=False)
+            if result.returncode == 0:
+                commit = result.stdout.strip() or "unknown"
+        except OSError:
+            pass
+    config = {
+        "profile_id": None,
+        "sources": {
+            name: dict(path="bench/" + filename, format=fmt, rows=rows, decisions=decisions,
+                       split="internal_test" if name == "internal_s0" else "test")
+            for name, (filename, fmt, rows, decisions) in BENCHMARK_DEFAULTS.items()
+        },
+        "limits": dict.fromkeys(LIMITS, 0),
+        "protocol": dict(max_length=4096, temperature=1.0, laya_primary="aligned_unit",
+                         laya_references=list(REFERENCES)),
+        "code": dict(commit=commit),
+    }
+    return config, sources, code, stub, sys.executable
 
 
 def load_profile(path):
@@ -105,7 +148,10 @@ def report_counts(path, stage):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--profile", required=True, type=Path)
+    inputs = parser.add_mutually_exclusive_group(required=True)
+    inputs.add_argument("--profile", type=Path, help="Legacy frozen full_eval_v1 bundle profile")
+    inputs.add_argument("--data-root", type=Path,
+                        help="Prepared helper output (local_data); uses current source and Python")
     parser.add_argument("--backend", required=True, choices=("dllm", "laya"))
     parser.add_argument("--model-path", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
@@ -116,15 +162,30 @@ def main():
     parser.add_argument("--laya-max-tokens", type=int, default=8192)
     parser.add_argument("--dtype", choices=("bfloat16", "float16", "float32"), default="bfloat16",
                         help="DLLM dtype only; Laya retains FP32")
+    parser.add_argument("--batch-size", type=int, default=1,
+                        help="DLLM external only in data-root mode; internal remains batch 1")
+    parser.add_argument("--warmup-batches", type=int, default=0,
+                        help="DLLM external only: untimed first-batch repeats per suite (data-root mode)")
     args = parser.parse_args()
     resolved_device = "cuda:0" if args.device == "cuda" else args.device
-    profile_path = args.profile.expanduser().resolve()
+    profile_path = args.profile.expanduser().resolve() if args.profile else None
+    data_root = args.data_root.expanduser().resolve() if args.data_root else None
     model = args.model_path.expanduser().resolve()
     output = args.output_dir.expanduser().absolute()
     try:
         if min(args.laya_max_seqs, args.laya_max_tokens) < 1:
             raise ValueError("Laya resource budgets must be positive")
-        profile, sources, code, stub, python = load_profile(profile_path)
+        if args.batch_size < 1 or args.warmup_batches < 0:
+            raise ValueError("batch-size must be positive and warmup-batches nonnegative")
+        if args.batch_size != 1 or args.warmup_batches != 0:
+            if profile_path is not None:
+                raise ValueError("legacy --profile requires batch-size 1 and warmup-batches 0; "
+                                 "use --data-root for DLLM external batching/warmup")
+            if args.backend == "laya":
+                raise ValueError("batch-size and warmup-batches are DLLM-only; "
+                                 "use --laya-max-seqs/--laya-max-tokens for Laya")
+        profile, sources, code, stub, python = (load_profile(profile_path) if profile_path is not None
+                                               else prepared_config(data_root))
         if not model.is_dir():
             raise ValueError("model-path must be an existing local checkpoint directory")
         if os.path.lexists(output):
@@ -133,14 +194,15 @@ def main():
         parser.error(str(exc))
 
     env = os.environ.copy()
-    env.update(HOME=profile["runtime"]["home"], HF_HOME=profile["runtime"]["hf_home"],
-               HF_HUB_OFFLINE="1", HF_DATASETS_OFFLINE="1", TRANSFORMERS_OFFLINE="1",
+    if profile_path is not None:
+        env.update(HOME=profile["runtime"]["home"], HF_HOME=profile["runtime"]["hf_home"])
+        # The legacy Transformers install is in HOME/.local, before child startup.
+        env.pop("PYTHONUSERBASE", None)
+        env.pop("PYTHONNOUSERSITE", None)
+    env.update(HF_HUB_OFFLINE="1", HF_DATASETS_OFFLINE="1", TRANSFORMERS_OFFLINE="1",
                HF_HUB_DISABLE_TELEMETRY="1",
                USE_TF="0", USE_TORCH="1", TOKENIZERS_PARALLELISM="false",
                PYTHONPATH=os.pathsep.join(map(str, (code, code / "research" / "scripts", stub))))
-    # The reused Transformers install is in HOME/.local; establish this before startup.
-    env.pop("PYTHONUSERBASE", None)
-    env.pop("PYTHONNOUSERSITE", None)
     limit = "3" if args.smoke else "0"
     common = ["--model-path", str(model), "--device", resolved_device,
               "--max-length", str(profile["protocol"]["max_length"])]
@@ -165,8 +227,10 @@ def main():
                           predictions=str(predictions), status="pending", exit_code=None))
 
     if args.backend == "dllm":
+        batching = (["--batch-size", str(args.batch_size), "--warmup-batches", str(args.warmup_batches)]
+                    if data_root is not None else [])
         task("external", "bench_diff_yesno.py", external + ["--dtype", args.dtype,
-             "--banking-test-limit", str(profile["limits"]["banking_test_limit"])])
+             "--banking-test-limit", str(profile["limits"]["banking_test_limit"])] + batching)
         task("internal", "shared_yesno_supervised.py", ["--data", str(sources["internal_s0"]),
              "--amp-dtype", args.dtype, "--limit", limit])
     else:
@@ -183,7 +247,16 @@ def main():
     }
     for current in tasks:
         current["planned_counts"] = planned_stages[current["stage"]]
-    manifest = dict(profile_id=profile["profile_id"], profile_path=str(profile_path),
+    execution = (dict(dtype=args.dtype, external_batch_size=args.batch_size, internal_batch_size=1,
+                      external_warmup_batches_per_suite=args.warmup_batches, internal_warmup_batches=0)
+                 if args.backend == "dllm" else
+                 dict(dtype="float32", batching="native length-sorted token-budget batches",
+                      max_seqs=args.laya_max_seqs, max_tokens=args.laya_max_tokens, warmup_batches=0))
+    manifest = dict(mode="profile" if profile_path is not None else "data_root",
+                    profile_id=profile["profile_id"],
+                    profile_path=str(profile_path) if profile_path is not None else None,
+                    data_root=str(data_root) if data_root is not None else None,
+                    python=python, execution=execution,
                     model_path=str(model), backend=args.backend, code_commit=profile["code"]["commit"],
                     code_path=str(code), protocol=profile["protocol"], sources=profile["sources"],
                     resolved_device=resolved_device,
@@ -193,7 +266,7 @@ def main():
                     status="pending", tasks=tasks,
                     config={key: str(value) if isinstance(value, Path) else value
                             for key, value in vars(args).items()},
-                    environment={key: env[key] for key in
+                    environment={key: env.get(key) for key in
                                  ("HOME", "HF_HOME", "PYTHONPATH", "HF_HUB_OFFLINE",
                                   "HF_DATASETS_OFFLINE", "TRANSFORMERS_OFFLINE",
                                   "USE_TF", "USE_TORCH", "TOKENIZERS_PARALLELISM")},
@@ -227,6 +300,7 @@ def main():
             current["status"] = "complete"
         except (OSError, ValueError, KeyError, TypeError, RuntimeError, KeyboardInterrupt) as exc:
             current.update(status="failed", error=type(exc).__name__ + ": " + str(exc))
+            current["error_details"] = dict(type=type(exc).__name__, message=str(exc))
             manifest["status"] = "failed"
             if not args.smoke:
                 manifest["full_status"] = "failed"

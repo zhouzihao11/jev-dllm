@@ -24,22 +24,32 @@
 
 ## 小规模检查与内部评测
 
-在 README 的外部评测命令中，将 `--limit-per-suite 0` 改为 `--limit-per-suite 3`，并使用新的 output/predictions 文件即可检查每套三个决策；仍需六套输入文件，其余 test-limit 保持 0。小样本不用于报告全量质量。
+在 README 的统一评测命令中添加 `--smoke`，并使用全新的 `--output-dir` 即可检查每套三个决策；仍需完整 `DATA_ROOT/bench` 七个输入文件。外部与 Laya 内部选取前缀，DLLM 内部沿用 seed42 whole-group spread，样本不完全一致；这是执行检查，不用于质量比较。正式运行去掉 `--smoke`，默认所有 test limit 为 0。
 
 训练入口也提供 `--train-limit`、`--dev-limit` 和 `--max-updates`。例如在主训练命令中添加 `--train-limit 64 --dev-limit 16 --max-updates 2`，并另选 `RUN_DIR`，可检查短运行；不要用这个截断配置恢复正式训练。
 
-内部测试独立于六套外部数据：
+统一 runner 已自动评测内部测试，DLLM 内部始终 batch 1、无预热，不受外部 `--batch-size` / `--warmup-batches` 影响。只有需要单独运行内部测试时才使用以下底层入口；`INTERNAL_ONLY_DIR` 的父目录需存在，且输出文件必须全新：
 
 ```bash
+export INTERNAL_ONLY_DIR="$PWD/outputs/internal_only"
+mkdir -p "$INTERNAL_ONLY_DIR"
 CUDA_VISIBLE_DEVICES=0 python research/scripts/shared_yesno_supervised.py \
   --model-path "$CHECKPOINT" \
   --data "$DATA_ROOT/bench/internal_s0_test.jsonl" \
-  --output "$EVAL_DIR/internal.json" \
-  --predictions "$EVAL_DIR/internal_predictions.jsonl" \
+  --output "$INTERNAL_ONLY_DIR/internal.json" \
+  --predictions "$INTERNAL_ONLY_DIR/internal_predictions.jsonl" \
   --device cuda:0 --amp-dtype bfloat16 --max-length 4096 --limit 0
 ```
 
-评测 base 时将 `CHECKPOINT` 改为 `BASE_MODEL`，并另选输出文件；S1 的 `new_dev.jsonl` 是诊断集，不是内部 test。
+评测 base 时将 `CHECKPOINT` 改为 `BASE_MODEL`，并另选输出目录；S1 的 `new_dev.jsonl` 是诊断集，不是内部 test。
+
+### 统一输出与状态
+
+DLLM 输出 `$EVAL_DIR/run.json`、`external.json`、`external_predictions.jsonl`、`internal.json`、`internal_predictions.jsonl`。内部指标位于 `internal.json` 顶层及 `by_source` / `by_primitive` / `by_K` / `by_target_kind`，不混入外部均值。
+
+Laya 保留 `$EVAL_DIR/run.json`、`laya.json`、`laya_predictions.jsonl`，不改写为 DLLM 的概率或指标格式。`laya.json` 的 `conditions.aligned_unit.suites` 是主结果，内部 suite 名为 `internal`；`aligned_sdk_temperature`、`sdk_unit`、`sdk_native` 是三个参考条件，预测文件以 `condition` 区分。
+
+`run.json` 记录运行模式、模型路径、代码路径/HEAD（无 Git 快照为 `unknown`，不是历史版本声明）、实际使用的 Python、有效精度与 batching 配置、预期/计划/实际计数、子命令和阶段退出码。默认全量期望决策数为 typed 2,000、AG News 7,600、Emotion 2,000、Banking77 3,080、Prompt Injection 116、SST-5 2,210、内部 1,000。各阶段成功且计数匹配后 `status=complete`；全量 `full_status=complete`，smoke 则为 `not_full_smoke`。失败阶段保存 `error` / `error_details`，后续阶段保留 `pending`，已有输出不删除；重跑必须使用新目录。启动参数/缺失路径错误在创建目录前直接报错。
 
 ## 质量与吞吐指标
 
@@ -54,9 +64,9 @@ CUDA_VISIBLE_DEVICES=0 python research/scripts/shared_yesno_supervised.py \
 | `decisions_per_second` | 同一计时范围的前向吞吐 |
 | `n_decisions` / `dropped` | 评测决策数 / 丢弃数 |
 
-质量主表使用 DLLM BF16 batch 1；吞吐对照只改 `--batch-size 32` 并保持同模型、设备、精度与预热。计时不包含分词、传输、CPU softmax、I/O 或排队，均摊前向耗时不等于单请求延迟。原 BF16 B1/B32 对照有 72/17,006 个 argmax 翻转；FP32 检查用 `--dtype float32`，不要默认 batching 逐位等价。
+质量主表使用 DLLM BF16 batch 1；吞吐对照只改 `--batch-size 32` 并保持同模型、设备、精度与预热。batching 仅覆盖外部六套数据，尾批可小于指定 batch；实际 batch 大小和预热 forward 数见 `external.json`。`--warmup-batches` 默认为 0，可设为 3，重复各 suite 首批，不计分、不计时。计时不包含分词、传输、CPU softmax、I/O 或排队，均摊前向耗时不等于单请求延迟。原 BF16 B1/B32 对照有 72/17,006 个 argmax 翻转；FP32 检查用 `--dtype float32`，不要默认 batching 逐位等价。
 
-Laya 对照保留原生头与 FP32 动态 batching（最多 16 sequences / 8,192 tokens），不是 DLLM batch 1 或 batch 32 的同配置速度对照。
+Laya 对照通过同一 runner 的 `--backend laya --model-path "$LAYA_CHECKPOINT"` 运行，保留原生头与 FP32 动态 batching（`--laya-max-seqs 16 --laya-max-tokens 8192`），不是 DLLM batch 1 或 batch 32 的同配置速度对照。DLLM 专用 `--batch-size` 非 1 或 `--warmup-batches` 非 0 会报错；`--dtype` 只影响 DLLM，不改变 Laya FP32。
 
 ## 可选：从来源重建数据
 
@@ -64,7 +74,7 @@ Laya 对照保留原生头与 FP32 动态 batching（最多 16 sequences / 8,192
 
 ## 可选：历史 runner 与 profile
 
-`research/scripts/run_full_benchmark.py` 用于 bundle/profile 工作流，不是主流程的前置要求。以 [profile 模板](full_eval_profile.template.json) 为起点，在独立目录准备：
+`research/scripts/run_full_benchmark.py` 的 `--data-root` 与 `--profile` 必选其一。主流程使用 `--data-root`，不需要冻结 bundle；当前 Python、HOME、HF 缓存和源码供子进程使用，并设置仓库根目录、`research/scripts`、`support/dllm_stub` 的 PYTHONPATH 与离线环境。高级 `--profile` 模式仍用于历史 bundle 工作流。以 [profile 模板](full_eval_profile.template.json) 为起点，在独立目录准备：
 
 - `sources`：六套 fixtures 和内部 S0 test，可从 `$DATA_ROOT/bench` 复制。
 - `code.path`：实际使用的代码目录；`code.commit` 如实填写对应版本。
@@ -82,7 +92,7 @@ python research/scripts/run_full_benchmark.py \
   --device cuda:0 --dtype bfloat16 --smoke
 ```
 
-正式运行去掉 `--smoke` 并换全新 output-dir。runner 没有 `--batch-size`，DLLM 默认 batch 1。Laya 使用 `--backend laya` 并提供相应英文 checkpoint，保留原生 FP32 配置。
+正式运行去掉 `--smoke` 并换全新 output-dir。历史冻结 evaluator 不接受新的 batch/warmup 参数，因此 profile 模式仅允许默认 `--batch-size 1 --warmup-batches 0`，且不会向子命令传递这两个新参数；需要外部 batching/预热请使用 `--data-root`。原 profile 代码路径、运行时、limit 和精度默认值保持不变。Laya 使用 `--backend laya` 并提供相应英文 checkpoint，保留原生 FP32 配置。
 
 ### 历史版本参考
 
@@ -92,4 +102,4 @@ python research/scripts/run_full_benchmark.py \
 | S1 构建/训练 | `80efa54951000a7b6f1637ea2bf146332540f9e2` |
 | 精选源码基线，含批处理评测 | `5d1b7de221579af74bde3131bc4eb8e61bba7c0f` |
 
-这些历史对象不包含在本仓库中。运行当前源码是新评测，使用新的 profile_id；严格复现原冻结质量快照才需要另行取得对应 bundle。原研究数值见博客，数据准备验证记录保留在 [manifest](../datasets/manifest.json)。
+这些历史对象不包含在本仓库中。运行当前源码是新评测；`--data-root` 不声明历史 profile_id，若自行创建当前源码的 profile 则使用新的 profile_id。严格复现原冻结质量快照才需要另行取得对应 bundle。原研究数值见博客，数据准备验证记录保留在 [manifest](../datasets/manifest.json)。

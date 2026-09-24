@@ -11,9 +11,9 @@
 | `scripts/check_shared_yesno_labels.py` | S0 构建后的独立标签检查；不支持作为全 S1 标签检查器 |
 | `scripts/train_qwen_masked_typed.py` | 继承 DDP trainer；明确指定 supervised/shared_yesno |
 | `scripts/shared_yesno_supervised.py` | canonical loader、监督损失、内部评测 |
-| `scripts/bench_diff_yesno.py` | 当前直接 DLLM batch 1/32 评测 |
+| `scripts/bench_diff_yesno.py` | 底层 DLLM 外部 batch 1/32 评测；通常由统一 runner 调用 |
 | `scripts/bench_laya_aligned.py` | Laya 原生头、输入与温度对齐评测 |
-| `scripts/run_full_benchmark.py` | 执行用户提供的 bundle/profile；不内置历史快照 |
+| `scripts/run_full_benchmark.py` | 统一 DLLM/Laya 全量外部与内部评测；`--data-root` 使用当前源码，`--profile` 保留历史 bundle 路径；二者必选其一 |
 | `scripts/bench_ar_matrix.py`、`scripts/bench_matrix.py`、`scripts/bench_local.py` | 必需的 suite/metrics/SDK 依赖闭包；各自 CLI 是 legacy optional，不是本研究主配方 |
 
 数据解压入口为根目录的 `scripts/prepare_datasets.py`，不在 `research/scripts/` 下。当前监督入口读取 canonical JSONL；S1 不导出 test，内部测试使用 S0 test。

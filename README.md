@@ -32,7 +32,7 @@ export BASE_MODEL="$PWD/models/qwen3-mdlm"
 export DATA_ROOT="$PWD/local_data"
 export RUN_DIR="$PWD/outputs/s1"
 export EVAL_DIR="$PWD/outputs/eval_s1"
-mkdir -p "$(dirname "$BASE_MODEL")" "$(dirname "$RUN_DIR")" "$EVAL_DIR"
+mkdir -p "$(dirname "$BASE_MODEL")" "$(dirname "$RUN_DIR")" "$(dirname "$EVAL_DIR")"
 ```
 
 模型权重不随仓库提供；下载原始 MDLM（不是 S0 checkpoint）及其 tokenizer/custom code：
@@ -100,26 +100,20 @@ CUDA_VISIBLE_DEVICES=0,1 torchrun --standalone --nproc_per_node=2 \
 export CHECKPOINT="$RUN_DIR/best"
 ```
 
-直接入口使用当前源码和六套已准备的文件，不需要历史冻结代码 bundle。显式将所有 limit 设为 0，避免 legacy 前缀默认值：
+统一入口使用当前源码、当前 Python 和 HOME/HF 缓存，无需历史冻结代码 bundle。`--data-root` 指向 helper 输出目录，默认全量运行六套外部评测及内部 S0 test，所有 test limit 为 0：
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python research/scripts/bench_diff_yesno.py \
+CUDA_VISIBLE_DEVICES=0 python research/scripts/run_full_benchmark.py \
+  --data-root "$DATA_ROOT" --backend dllm \
   --model-path "$CHECKPOINT" \
-  --typed-data "$DATA_ROOT/bench/typed_decisions_test.parquet" \
-  --prompt-data "$DATA_ROOT/bench/prompt_injection_test.parquet" \
-  --sst5-data "$DATA_ROOT/bench/sst5_test.jsonl" \
-  --banking-test-csv "$DATA_ROOT/bench/banking77_test.csv" \
-  --ag-news-test-jsonl "$DATA_ROOT/bench/ag_news_test.jsonl" \
-  --emotion-test-jsonl "$DATA_ROOT/bench/emotion_test.jsonl" \
-  --output "$EVAL_DIR/external.json" \
-  --predictions "$EVAL_DIR/external_predictions.jsonl" \
-  --device cuda:0 --dtype bfloat16 --max-length 4096 \
-  --batch-size 1 --warmup-batches 3 --limit-per-suite 0 \
-  --banking-test-limit 0 --ag-news-test-limit 0 \
-  --emotion-test-limit 0 --sst5-test-limit 0
+  --output-dir "$EVAL_DIR" \
+  --device cuda:0 --dtype bfloat16 \
+  --batch-size 1 --warmup-batches 0
 ```
 
-质量比较使用 DLLM batch 1；吞吐对照改为 `--batch-size 32`，FP32 排查改为 `--dtype float32`，均另选输出文件。评测拒绝覆盖已有文件。
+质量比较使用 DLLM batch 1；吞吐对照改为 `--batch-size 32`，仅外部评测批处理，内部始终 batch 1。`--warmup-batches` 默认 0，可设为 3，只对每套外部数据首批做不计分、不计时的重复预热；吞吐比较保持预热配置一致。FP32 排查改为 `--dtype float32`。每次另选全新 `--output-dir`，不要预先创建该目录，runner 拒绝覆盖。仅执行检查时添加 `--smoke`，不用于质量比较。
+
+Laya 使用同一入口，改为 `--backend laya` 并提供 Laya checkpoint；保留原生 FP32 与 `--laya-max-seqs 16 --laya-max-tokens 8192`。四种条件中 `aligned_unit` 为主结果；Laya 不接受非默认 DLLM batch/warmup 配置，输出格式见[高级用法](docs/reproduce.md)。
 
 ## 6. 查看输出
 
@@ -127,8 +121,11 @@ CUDA_VISIBLE_DEVICES=0 python research/scripts/bench_diff_yesno.py \
 |---|---|
 | `$RUN_DIR/best/` | dev KL 最佳模型与 tokenizer |
 | `$RUN_DIR/resume-latest/` | 可恢复训练的完整状态 |
+| `$EVAL_DIR/run.json` | 模式、源码版本、精度、外部/内部 batch、计划/实际计数与阶段状态 |
 | `$EVAL_DIR/external.json` | 分 suite 的质量、计时与计数 |
 | `$EVAL_DIR/external_predictions.jsonl` | 逐决策概率与预测 |
+| `$EVAL_DIR/internal.json` | 内部 S0 test 指标与分组统计 |
+| `$EVAL_DIR/internal_predictions.jsonl` | 内部逐决策概率与预测 |
 
 快速查看各 suite 指标及总决策数：
 
@@ -145,7 +142,7 @@ print("total decisions:", sum(r["n_decisions"] for r in suites.values()))
 PY
 ```
 
-全量外部应为 17,006 个决策；内部 1,000 条另报。单卡、恢复训练、内部评测、smoke 与计时解释见[高级用法](docs/reproduce.md)。
+全量外部应为 17,006 个决策；内部 1,000 条由 runner 自动评测、单独报告。`run.json` 的 `status` 与 `full_status` 均为 `complete` 才表示全量计数检查通过；smoke 的 `full_status` 为 `not_full_smoke`。失败时保留输出、退出码与错误详情。单卡、恢复训练、内部评测、smoke 与计时解释见[高级用法](docs/reproduce.md)。
 
 ## FAQ 与参考
 
