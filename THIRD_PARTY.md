@@ -6,7 +6,8 @@
 
 - Laya SDK：上游 [NandhaKishorM/laya](https://github.com/NandhaKishorM/laya)，包元数据署名 Convai Innovations，Apache-2.0。`laya/` 原样保留，根 `LICENSE` 原样保留；源树没有根 `NOTICE`，未虚构上游通知文件。
 - `pyproject.toml` / `setup.py` 保留继承元数据；其项目名、版本和上游 URL 不是本研究的新包发布声明。
-- 研究脚本来自本项目继承树，包含上游 suite/SDK 工具与 Shared Yes/No 增量，不统一宣称原创。精选来源 SHA 见根 README；本次仅对 `bench_local.py` 的模型目录增加环境参数，并在文件内标注修改。
+- 研究脚本来自本项目继承树，包含上游 suite/SDK 工具与 Shared Yes/No 增量，不统一宣称原创。精选来源 SHA 见[高级用法](docs/reproduce.md)；整理时对 `bench_local.py` 的模型目录增加环境参数，并在文件内标注修改。
+- `support/dllm_stub/dllm/__init__.py` 是本项目新增、仅含 docstring 的兼容导入标记，不包含上游 `dllm` 库实现；用途见 [README FAQ](README.md#faq-与参考)。
 - 新增文档和整理增量在私有首版准备中沿用 Apache-2.0；公开前仍需维护者确认贡献者及所属机构权利、适用通知义务。此安排不代表已核实第三方资产全部权利。
 
 ## 外部模型，不随仓库分发
@@ -15,7 +16,7 @@
 |---|---|---|
 | MDLM base / tokenizer | [dllm-hub/Qwen3-0.6B-diffusion-mdlm-v0.1](https://huggingface.co/dllm-hub/Qwen3-0.6B-diffusion-mdlm-v0.1) | 原记录 metadata revision `c8d24a3f4adaeef46881b450e1bf7d1005203bd7`，非本次重新核实 |
 | Laya 英文 checkpoint | [convaiinnovations/laya](https://huggingface.co/convaiinnovations/laya) | checkpoint revision 未在本副本锁定；不冒充可逐位复现 |
-| MDLM custom code / `dllm_stub` | 原模型运行依赖，须资源所有者单独供应 | 确切来源、版本和再分发许可未完成核实，均未复制 |
+| MDLM custom code | 随上述外部模型下载 | 未复制进本仓库，适用上游条款；本项目兼容导入标记不替代这些模型类 |
 | S0/S1 权重 | 本项目训练产物 | 计划单独处理模型发布，当前没有权重文件；不能从源码 Apache 推导权重许可 |
 
 模型加载使用 `trust_remote_code=True`，即使 `local_files_only=True` 仍会执行本地模型代码。先审阅来源与代码；不要把本仓库的许可证当作执行外部代码的安全保证。

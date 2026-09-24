@@ -1,8 +1,8 @@
-# 数据与模型准备
+# 从来源重建数据：raw/prepared 参考
 
-**本私有版本已包含 S0/S1 canonical 与六套全量冻结评测 fixtures，不包含完整 raw 上游 train 或 raw 到 prepared 的完整获取/导出工具。** 有 GitHub 私有仓库访问权限后，通过 `git clone` / `git pull` 获取本版本即包含数据，无需额外下载。用户已授权私有纳入，不等于公开再分发许可确认。标准库解压入口与路径见[数据包说明](../datasets/README.md)；远端数据准备、与原研究文件逐字节比对及独立 Parquet 计数验证已于 2026-09-24 完成，未改变划分或 schema。旧下载器没有复制；只有从来源重建才需要单独获取 raw/prepared。模型权重、custom code/stub 和历史冻结代码 bundle 仍不提供，完整模型流水线未验证。
+使用已打包 canonical 训练与评测，请直接按[根 README](../README.md)操作；模型下载也在该入口。本文仅供从来源重新构建数据，不要求主流程先准备 raw/prepared。完整上游 train 和 raw 到 prepared 的获取/导出工具不随仓库提供。
 
-所有 `$DATA_ROOT`、`$MODEL_DIR`、`$OUTPUT_ROOT` 由使用者设为真实合法路径；DATA_ROOT 可使用忽略的 `local_data/`，模型与输出留在仓库外。下述 S0/S1 raw/prepared 契约仅用于从来源重建，不是训练/评测已打包 canonical 的前置要求。重建时保留原始 train 文件、revision、标签元数据、原始顺序及 ID，导出后逐行对照原字段和标签映射。只有取得合法访问权后才准备资源。
+重建时将 `$DATA_ROOT` 设为独立的新目录，沿用 README 中的 `$BASE_MODEL`。保留原始 train 文件、revision、标签元数据、顺序及 ID，导出后逐行对照字段和标签映射。
 
 ## S0 prepared contract
 
@@ -41,7 +41,7 @@ S1 还需要完整的 S0 canonical train/dev/test、source_manifest、build_mani
 
 ## 外部评测 fixtures 与 profile
 
-私有包提供下表全部 fixtures，准备到 `$DATA_ROOT/bench`（内部测试从 S0 test 复制）。保持原研究冻结文件的全量、原始行顺序和重复行；不能用 train 补数量。捕获版本与材料见 [manifest](../datasets/manifest.json) 和[14 份来源卡片](../datasets/SOURCES.md)；来源卡片不是完整法律审查，历史模型流水线仍未独立复现。
+仓库提供下表全部 fixtures，解压到 `bench/`（内部测试从 S0 test 复制）。保持全量、原始行顺序和重复行，不用 train 补数量。捕获版本见 [manifest](../datasets/manifest.json) 和[来源记录](../datasets/SOURCES.md)。
 
 | fixture | 字段/标签契约 | 参考行数 / 决策数 |
 |---|---|---|
@@ -53,16 +53,31 @@ S1 还需要完整的 S0 canonical train/dev/test、source_manifest、build_mani
 | `sst5_test.jsonl` | text、label 0..4：very negative/negative/neutral/positive/very positive | 2,210 / 2,210 |
 | `internal_s0_test.jsonl` | S0 canonical test，不是 S1 new_dev | 1,000 / 1,000 |
 
-数据准备验证已核实外部合计 17,006 决策、内部另计 1,000 决策；这不是本次重新运行模型评测。helper 验证 JSONL/CSV 行数，对 Parquet 仅输出声明；本版本另以 PyArrow 验证两份 Parquet 的实际计数。S1 exclusion audit 读取六来源完整文本而非评测前缀，声明行数必须与文件一致。来源策略是禁止六来源所有 split；文本审计只能覆盖实际供应的 fixtures，不证明预训练零污染。
+S1 exclusion audit 读取六来源完整文本而非评测前缀，声明行数必须与文件一致。来源策略是禁止六来源所有 split；文本审计只能覆盖实际供应的 fixtures，不证明预训练零污染。
 
-`full_eval_profile.template.json` **不是 ready profile**：它只有字段结构、相对路径和协议参考数量。私有包提供全部 fixtures，但不提供 code/stub/runtime。直接 CLI 使用 `$DATA_ROOT/bench`，不需要 profile。可选 runner 需在仓库外建立 bundle，复制六个外部 fixtures 及内部 S0 test，手工适配 sources 路径。JSON 不会展开 `$VAR` 或 `~`；helper 不生成 profile。`runtime.python`、`runtime.home`、`runtime.hf_home` 替换成执行机真实绝对路径；code.path、runtime.dllm_stub 和 sources.*.path 都是相对 profile 目录的路径，不得绝对或包含 `..`。
+S1 builder 的 `--heldout-profile` 使用 [profile 模板](full_eval_profile.template.json)中的 sources 路径读取这些输入；先按实际目录适配，JSON 不展开 shell 变量。可选模型 runner 的 code/runtime 配置见[高级用法](reproduce.md)。
 
-历史冻结质量需资源所有者单独提供 `fb672477594f29681b90d13ec679819ab8033c5c` 对应的合法源码 bundle；私有包提供冻结 fixtures，但本仓库不含该代码快照。若改用本发布版源码，必须填写新的实际版本与不同 profile_id，称为新评测而非历史冻结复现。`code.commit` 只是记录字段，runner 不验证它与目录内容相符，使用者须如实填写。不要仅改字段冒充冻结版本。
+## 构建命令
 
-## 模型准备与阻塞项
+准备好上述来源和 profile 后，运行：
 
-DLLM 路径应含兼容的本地 config/tokenizer/权重和审阅过的模型 custom code，模型须暴露 `base.model`、`lm_head`，tokenizer 的 Yes/No 必须单 token、互不相同，mask ID 必须可 round-trip。原记录 Yes=9454、No=2753、mask=151669；代码运行时检查而非任意模型通用保证。S0/S1 数据构建只加载 tokenizer，不加载权重，但仍需要相应 Python 依赖。
+```bash
+python research/scripts/build_shared_yesno_data.py \
+  --source-dir "$DATA_ROOT/s0_sources" --tokenizer-path "$BASE_MODEL" \
+  --output-dir "$DATA_ROOT/s0" --seed 42 --max-length 4096 \
+  --max-records-per-source 8000 --stratify-source clinc
 
-外部 `dllm_stub` 按历史布局位于 bundle 的 `support/dllm_stub`，其下应有 `dllm/__init__.py`。stub 的具体接口、来源、版本和许可没有足够可发布材料，不能凭名字编造替代实现；由合法资源所有者供应并核实。未得到匹配 custom code/stub 前，完整干净机器复现仍被阻塞。
+python research/scripts/check_shared_yesno_labels.py \
+  --dataset-dir "$DATA_ROOT/s0" --source-dir "$DATA_ROOT/s0_sources" \
+  --output "$DATA_ROOT/s0_label_check.json"
 
-runner 将 HOME/HF_HOME 设置为 profile 值，并移除 PYTHONUSERBASE/PYTHONNOUSERSITE；历史运行曾依赖 HOME 下的用户级包。选择明确的绝对 Python 路径，检查其实际依赖，不假定原机器缓存存在。runner 强制离线；直接命令也应使用明确 fixture 与本地模型。所有生成报告可能含文本、token IDs 或私有路径，不随源码分发。
+python research/scripts/build_shared_yesno_s1.py \
+  --s0-dir "$DATA_ROOT/s0" --source-dir "$DATA_ROOT/s0_sources" \
+  --new-source-dir "$DATA_ROOT/s1_sources" --tokenizer-path "$BASE_MODEL" \
+  --heldout-profile "$DATA_ROOT/full_eval/profile.json" \
+  --output-dir "$DATA_ROOT/s1" --config research/s1_data_config.json
+```
+
+两个 builder 都有 `--smoke`，应使用单独输出目录；S1 smoke 仍需要完整 S0 和外部 fixtures。S0 拒绝非空输出目录，S1 要求全新目录，报告父目录须存在。构建只加载 tokenizer，不加载模型权重。
+
+S0 目标 train/dev/test 为 10,000/1,000/1,000；S1 请求新增 train 30,000（公共 25,000 + 合成 5,000）与诊断 dev 2,000。实际数量取决于碰撞/短缺报告；`requires_parent_dev_collision_review` 需要审查，不能静默修改原 dev。S0 标签检查器不适用于完整 S1；S1 使用构建器中的标注映射与独立 solver。

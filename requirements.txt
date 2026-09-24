@@ -1,0 +1,16 @@
+# Relevant packages observed in the Python 3.10.20 research runtime.
+# Not a complete lockfile or a clean-environment installation verification.
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch==2.3.1+cu121
+transformers==4.57.0
+tokenizers==0.22.2
+numpy==1.26.4
+safetensors==0.4.3
+huggingface-hub==0.36.2
+pandas==2.3.3
+pyarrow==24.0.0
+datasets==4.8.5
+requests==2.34.2
+tqdm==4.67.3
+accelerate==0.33.0
+packaging==26.2
