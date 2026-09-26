@@ -98,4 +98,4 @@ PYTHONPATH="$HARNESS${PYTHONPATH:+:$PYTHONPATH}" python -m jevbench.cli summariz
 
 官方摘要使用 ECE10；Core 使用 ECE15。官方 summary 内的 `jevbench-v1` 是继承的聚合文件格式标签，不应篡改为 v1.4；实际协议和 revision 由外层身份记录标明。NLL 和 HTTP mean latency 可另作补充诊断，但不是官方综合分。
 
-延迟是本机 loopback 端到端请求时间，包含 HTTP、分词与推理，不是 GPU forward，也不是官方网络测量。已有公开结果见[结果说明](results.md)。公开题已被观察过；本流程不宣称盲测、预训练无污染、sealed 能力或官方排名。发布版远程复现验证尚待补充，历史成功不等于已验证此次干净安装。
+延迟是本机 loopback 端到端请求时间，包含 HTTP、分词与推理，不是 GPU forward，也不是官方网络测量。已有公开结果见[结果说明](results.md)。公开题已被观察过；本流程不宣称盲测、预训练无污染、sealed 能力或官方排名。发布版已在独立代码目录复现 S1 的全部 231 条接口验证与官方运行，见[验证记录](release_validation.md)；这不是从零安装依赖的验证。

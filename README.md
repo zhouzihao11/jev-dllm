@@ -17,7 +17,7 @@ python -m pip install -r requirements.txt
 export USE_TF=0 USE_TORCH=1 TOKENIZERS_PARALLELISM=false
 ```
 
-入口自动处理仓库和 DLLM stub 的导入路径，无需手动设置私有 `PYTHONPATH`。依赖来自研究运行环境，不是完整锁文件；发布版干净环境的远程验证尚待补充。
+入口自动处理仓库和 DLLM stub 的导入路径，无需手动设置私有 `PYTHONPATH`。已通过全新来源下载、独立代码目录重建、S1 全量评测和 HTTP 验证，见[验证记录](docs/release_validation.md)。验证复用了已有依赖环境，未验证从零安装所有依赖；`requirements.txt` 不是完整锁文件。
 
 ## 2. 下载 S1
 

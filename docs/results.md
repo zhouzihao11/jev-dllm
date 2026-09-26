@@ -1,6 +1,6 @@
 # 结果与限制
 
-以下为已完成研究运行报告的数值整理，不是此次发布目录的新运行结果。Core 和官方 JevBench HTTP 是两种不同协议，分别报告；发布版干净安装、来源重建与远程运行验证仍待补充。没有使用这些结果拟合温度或为本次公开集重新选择 checkpoint。
+以下为已完成研究运行报告的数值整理。Core 和官方 JevBench HTTP 是两种不同协议，分别报告；发布副本已经独立完成来源重建、四模型 smoke、S1 全量与 HTTP 复现，质量结果一致，见[验证记录](release_validation.md)。没有使用这些结果拟合温度或为本次公开集重新选择 checkpoint。
 
 模型身份：base 为 [Qwen3-0.6B diffusion MDLM](https://huggingface.co/dllm-hub/Qwen3-0.6B-diffusion-mdlm-v0.1)，revision `c8d24a3f4adaeef46881b450e1bf7d1005203bd7`；[S0](https://huggingface.co/SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S0) revision `265560cdcea68443fed89525437f4be7235574db`；[S1](https://huggingface.co/SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S1) revision `1f1c29ff9fc6f6e9dc066b03089878a7dab8b6a0`。Laya-base 是继承的原生对照，不是另一份 S1。
 
@@ -119,4 +119,4 @@ S1 总体准确率更高，但 ECE10 高于 base/S0，Brier/NLL 不如 S0；hard
 
 使用[Core 流程](benchmark_core.md)和[官方公开集流程](jevbench_public.md)生成自己的逐题证据。此页只整理聚合数字，不复制原始题文、模型绝对路径、服务器身份或私有运行日志。研究汇总阶段曾修复一次指标 API 调用错误，未重跑推理或改数据；不将其掩饰成模型质量改善。
 
-当前发布准备未执行新的干净环境安装、来源下载或 GPU 运行；后续验证记录应与本页历史研究结果分开。审计范围见[重叠说明](overlap_audit.md)，方法的历史叙述见[研究博客](blog_zh.md)。
+发布验证重新下载固定来源、在独立目录重建数据并执行 GPU 推理；复用已有依赖环境，没有重新安装完整环境。验证过程与本页研究结果分开记录。审计范围见[重叠说明](overlap_audit.md)，方法的历史叙述见[研究博客](blog_zh.md)。

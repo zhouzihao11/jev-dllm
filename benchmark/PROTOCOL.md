@@ -6,7 +6,7 @@
 
 打包逐 ID 核对审计、原始 suite/group、保留集合及计数。CLINC、BoolQ、ForecastBench 在 core 中强制禁止，即使审计误标 retain 也报错，不自动覆盖审计决定。不得按模型成绩、成功运行与否或上下文长度选择样本。原始文件只读；不生成新 ID、目标或概率分布，不改变 state/qdef、选项或行顺序。审计仍依赖已识别来源和审计方法，不意味着检测到所有隐性暴露。
 
-manifest 的 `schema_version=benchmark_core_v1`、`profile_id=core_v1_candidate`、`source_profile_id` 固定标识协议与来源，包含每 suite 原始计数和保留计数、相对文件路径、审计范围、选择版本与决定计数。实际审计细节随包保留；未完成真实报告前不得将候选称为 audit-clean 已发布集。
+manifest 的 `schema_version=benchmark_core_v1`、`profile_id=core_v1_candidate`、`source_profile_id` 固定标识协议与来源，包含每 suite 原始计数和保留计数、相对文件路径、审计范围、选择版本与决定计数。公开包保留固定成员决定与审计摘要，不分发私有训练片段或路径。准备步骤是冻结成员回放，不是重新执行完整训练重叠审计，也不宣称绝对无污染。
 
 ## 文件边界
 
