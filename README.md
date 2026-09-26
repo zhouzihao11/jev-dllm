@@ -2,7 +2,7 @@
 
 在每个候选旁放置 mask，用 masked diffusion language model 的共享 Yes/No 权重读取结构化概率：动态选择、二元判断和有序评分。无需生成答案文本，也不需要先训练即可体验。
 
-[代码](https://github.com/zhouzihao11/jev-dllm) · [S1 模型](https://huggingface.co/SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S1) · [结果与限制](docs/results.md)
+[代码](https://github.com/zhouzihao11/jev-dllm) · [S1 模型](https://huggingface.co/SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S1) · [实验结果表](docs/experiment_results.md) · [结果与限制](docs/results.md)
 
 ## 1. 安装
 
