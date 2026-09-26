@@ -1,107 +1,90 @@
 # Jev-DLLM: Shared Yes/No Decision Models
 
-在每个候选旁放置一个 mask，用 masked diffusion language model 的共享 Yes/No 权重一次前向得到结构化概率，支持动态选择、二元判断和有序评分。
-本仓库包含代码、S0/S1 训练数据与六套评测输入；已发布的 [S0](https://huggingface.co/SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S0) / [S1](https://huggingface.co/SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S1) 模型可直接下载，方法与结果见[研究博客](docs/blog_zh.md)。
+在每个候选旁放置 mask，用 masked diffusion language model 的共享 Yes/No 权重读取结构化概率：动态选择、二元判断和有序评分。无需生成答案文本，也不需要先训练即可体验。
 
-## 1. 安装与路径
+[代码](https://github.com/zhouzihao11/jev-dllm) · [S1 模型](https://huggingface.co/SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S1) · [结果与限制](docs/results.md)
 
-在仓库根目录执行，使用 Python 3.10、NVIDIA GPU 和兼容 CUDA 12.1 的驱动：
+## 1. 安装
+
+首次使用先获取仓库；已有本地仓库则跳过前两行，其余命令在仓库根目录执行。使用 Python 3.10、支持 BF16 的 NVIDIA GPU 和兼容 CUDA 12.1 的驱动；显存需求随输入长度和 batch 改变。
 
 ```bash
+git clone https://github.com/zhouzihao11/jev-dllm.git
+cd jev-dllm
 conda create -n shared-yesno python=3.10 -y
 conda activate shared-yesno
 python -m pip install -r requirements.txt
-export PYTHONPATH="$PWD:$PWD/research/scripts:$PWD/support/dllm_stub${PYTHONPATH:+:$PYTHONPATH}"
 export USE_TF=0 USE_TORCH=1 TOKENIZERS_PARALLELISM=false
-
-export BASE_MODEL="$PWD/models/qwen3-mdlm"
-export DATA_ROOT="$PWD/local_data"
-export RUN_DIR="$PWD/outputs/s1"
-export EVAL_DIR="$PWD/outputs/eval_s1"
-mkdir -p "$(dirname "$BASE_MODEL")" "$(dirname "$RUN_DIR")" "$(dirname "$EVAL_DIR")"
 ```
 
-## 2. 选择模型
+入口自动处理仓库和 DLLM stub 的导入路径，无需手动设置私有 `PYTHONPATH`。依赖来自研究运行环境，不是完整锁文件；发布版干净环境的远程验证尚待补充。
 
-**直接评测 S1：** 下载已训练 checkpoint，并在第 5 节选择它：
+## 2. 下载 S1
 
 ```bash
-hf download SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S1 --local-dir "$PWD/models/shared-yesno-s1"
 export CHECKPOINT="$PWD/models/shared-yesno-s1"
+hf download SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S1 \
+  --revision 1f1c29ff9fc6f6e9dc066b03089878a7dab8b6a0 \
+  --local-dir "$CHECKPOINT"
 ```
 
-也可下载 [S0](https://huggingface.co/SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S0)，将 `CHECKPOINT` 指向 S0 的下载目录分别评测。
+加载器使用 `trust_remote_code=True`，会执行 checkpoint 中的自定义模型代码；请审阅并信任固定来源。S0 和原始 MDLM 的固定版本见[训练说明](docs/training.md)。
 
-**从原始模型训练：** 下载包含 tokenizer/custom code 的固定版本 MDLM 到 `BASE_MODEL`：
+## 3. 准备 Core benchmark
+
+先阅读[来源与使用条款](docs/benchmark_sources.md)，再按自己的使用权限下载。准备脚本获取 14 个固定来源条目（不是模型），重建 17 套、6,744 个决策；原始数据留在仓库外缓存，不向 Git 添加新原始数据。
 
 ```bash
-hf download dllm-hub/Qwen3-0.6B-diffusion-mdlm-v0.1 \
-  --revision c8d24a3f4adaeef46881b450e1bf7d1005203bd7 \
-  --local-dir "$BASE_MODEL"
+export CORE_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/jev-dllm"
+export CORE_DATA="$PWD/local_data/core-v1"
+python scripts/prepare_core.py \
+  --cache-dir "$CORE_CACHE" --output-dir "$PWD/local_data/core-v1"
 ```
 
-下载完成后，如需离线运行，再设置 `export HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1 TRANSFORMERS_OFFLINE=1`。加载模型会使用 `trust_remote_code=True`。
+输出目录必须不存在。该步骤回放冻结的审计成员选择，不重新运行完整私有暴露审计；仅相对已知 S0/S1 训练及 dev 暴露审计，预训练重叠未知，公开题也已被观察过。详见[数据卡](benchmark/DATA_CARD.md)。
 
-## 3. 准备数据
-
-仓库已包含压缩数据，准备到全新目录（目标路径不能已存在）：
+## 4. 评测
 
 ```bash
-python scripts/prepare_datasets.py --output-dir "$DATA_ROOT"
+mkdir -p outputs
+export EVAL_DIR="$PWD/outputs/core-s1"
+python benchmark/evaluate.py \
+  --data-root "$CORE_DATA" --backend dllm --model-path "$CHECKPOINT" \
+  --output-dir "$EVAL_DIR" --device cuda:0 --dtype bfloat16 \
+  --batch-size 32 --max-length 4096
 ```
 
-| 用途 | 相对 `DATA_ROOT` 的路径 | 决策数 |
-|---|---|---:|
-| S0 train / dev / test | `s0/canonical/{train,dev,test}.jsonl` | 10,000 / 1,000 / 1,000 |
-| S1 train / 选优 dev / 诊断 dev | `s1/canonical/{train,dev,new_dev}.jsonl` | 40,000 / 1,000 / 2,000 |
-| 六套外部评测 / 内部 S0 test | `bench/` / `bench/internal_s0_test.jsonl` | 17,006 / 1,000 |
+每次换一个不存在的输出目录。可先添加 `--smoke --smoke-limit 3`，并改用 `outputs/core-s1-smoke`（每套前三条，不是完整结果）。默认每 10 batch 及套件边界打印进度；加 `--log-every-batches 1` 可逐 batch 查看。显存不足时减小 batch，并记录配置变化。
 
-S1 train 包含 S0 train；选优 dev 使用 S0 dev。文件映射见[数据说明](datasets/README.md)。
+结果位于 `$EVAL_DIR/scores/report.json`，逐条预测为 `$EVAL_DIR/predictions.jsonl`。超长输入记录为 `unsupported_length`，不截断、不静默丢弃；覆盖率和准确率分母见[评测说明](docs/benchmark_core.md)。
 
-## 4. 训练 S1
+## 5. 启动原生概率 HTTP
 
-从 `BASE_MODEL` 开始；按实际设备调整 `CUDA_VISIBLE_DEVICES`，单卡配置见[高级用法](docs/reproduce.md)。
+评测结束后，在同一环境运行：
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 torchrun --standalone --nproc_per_node=2 \
-  research/scripts/train_qwen_masked_typed.py \
-  --model-path "$BASE_MODEL" \
-  --train-data "$DATA_ROOT/s1/canonical/train.jsonl" \
-  --dev-data "$DATA_ROOT/s1/canonical/dev.jsonl" \
-  --output-dir "$RUN_DIR" \
-  --loss-mode supervised --scoring-mode shared_yesno \
-  --seed 42 --epochs 3 --micro-batch 4 --grad-accum 4 \
-  --learning-rate 2.5e-5 --min-lr 1e-6 --weight-decay 0.01 \
-  --warmup-ratio 0.05 --rps-weight 0.25 \
-  --eval-every 100 --save-every 200 \
-  --save-epoch-checkpoints --save-predictions \
-  --max-length 4096 --amp-dtype bfloat16
+python benchmark/serve.py \
+  --model-path "$CHECKPOINT" --model-name Shared-YesNo-Qwen3-0.6B-S1 \
+  --device cuda:0 --dtype bfloat16 --max-length 4096 --port 8000
 ```
 
-有效 batch 为 32；训练按 dev mean KL 将选中模型保存于 `$RUN_DIR/best`，并在 `$RUN_DIR/resume-latest` 保存恢复点。评测自己训练的模型时设置 `export CHECKPOINT="$RUN_DIR/best"`。
-
-## 5. 统一评测
-
-选择第 2 节下载的 S0/S1 checkpoint，或第 4 节训练的 `best/`，设置 `CHECKPOINT` 后运行：
+看到 ready 后，在另一个终端请求（仅监听 `127.0.0.1`）：
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python research/scripts/run_full_benchmark.py \
-  --data-root "$DATA_ROOT" --backend dllm \
-  --model-path "$CHECKPOINT" --output-dir "$EVAL_DIR" \
-  --device cuda:0 --dtype bfloat16 --batch-size 1
+curl --fail http://127.0.0.1:8000/health
+curl --fail http://127.0.0.1:8000/v1/systemone \
+  -H 'Content-Type: application/json' \
+  --data '{"state":"The delivery arrived two days late.","model":"Shared-YesNo-Qwen3-0.6B-S1","questions":{"sentiment":{"type":"choice","instructions":"Classify the customer sentiment.","criteria":{"Positive":"The customer is satisfied.","Negative":"The customer is dissatisfied."}}}}'
 ```
 
-runner 评测六套外部任务（17,006 个决策）和单独报告的内部 S0 test（1,000 个决策）；输出目录必须全新。结果在 `$EVAL_DIR/run.json`、`$EVAL_DIR/external.json` 和 `$EVAL_DIR/internal.json`，逐决策结果在同目录的 `external_predictions.jsonl` 与 `internal_predictions.jsonl`。快速查看各套指标：
+返回 `answers.sentiment.choice` 和以原始候选字符串为键的 `probabilities`。这是原生 shared Yes/No 读出，不是从生成文本伪造概率。三种问题格式与限制见 [HTTP 协议](benchmark/JEVBENCH.md)；服务用 Python 标准库，无需 FastAPI。
 
-```bash
-python - "$EVAL_DIR/external.json" <<'PY'
-import json
-import sys
-with open(sys.argv[1], encoding="utf-8") as f:
-    suites = json.load(f)["suites"]
-for name, result in suites.items():
-    print(name, {k: result[k] for k in ("n_decisions", "accuracy", "nll", "ece", "ms_per_decision")})
-PY
-```
+## 更多
 
-单卡、恢复、smoke、外部 batch 32 吞吐对照与 Laya 原生对照见[高级用法](docs/reproduce.md)；batch 32 均摊前向耗时不是单请求延迟。数据重建见[raw/prepared 参考](docs/data_and_models.md)，字段见 [schema](docs/SCHEMA.md)。继承 SDK 来自 [NandhaKishorM/laya](https://github.com/NandhaKishorM/laya)；许可与归属见 [LICENSE](LICENSE) 和 [THIRD_PARTY](THIRD_PARTY.md)。
+- [Core 操作与输出](benchmark/README.md)、[数据卡](benchmark/DATA_CARD.md)、[重叠审计范围](docs/overlap_audit.md)
+- [官方 JevBench 公开 231 题流程](docs/jevbench_public.md)：先验证，再通过官方 CLI 运行；不含 sealed 或排行榜提交
+- [四模型 Core 与公开 HTTP 结果](docs/results.md)：同时报告准确率、校准和失败覆盖
+- [S0/S1 训练](docs/training.md)、[旧版六套 benchmark / 恢复 API](docs/reproduce.md)（legacy，不是本页 Core 命令）
+- [研究博客（历史背景）](docs/blog_zh.md)、[旧数据与模型参考](docs/data_and_models.md)、[字段说明](docs/SCHEMA.md)
+
+继承 SDK 来自 [NandhaKishorM/laya](https://github.com/NandhaKishorM/laya)。许可与归属见 [LICENSE](LICENSE)、[THIRD_PARTY](THIRD_PARTY.md)。

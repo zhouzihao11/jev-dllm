@@ -50,6 +50,8 @@ data/
 *.json
 !research/s1_data_config.json
 !docs/full_eval_profile.template.json
+!/benchmark/manifests/core_v1.json
+!/benchmark/manifests/core_v1_retained_ids.json
 /datasets/**
 !/datasets/s0/
 !/datasets/s1/

@@ -14,3 +14,4 @@ requests==2.34.2
 tqdm==4.67.3
 accelerate==0.33.0
 packaging==26.2
+tomli>=2.0,<3; python_version < "3.11"

@@ -1,0 +1,77 @@
+{
+  "schema_version": "core_preparation_v1",
+  "profile_id": "core_v1_candidate",
+  "source_profile_id": "full_eval_v2_20260925",
+  "selection_version": "core_v1_candidate_public_membership_v1",
+  "candidate_count": 6768,
+  "retained_count": 6744,
+  "retained_ids_file": "core_v1_retained_ids.json",
+  "historical_parent": {"suite_count": 20, "row_count": 19826},
+  "membership_method": "All JevBench public tier rows and jabr v2 cases in pinned source order; exact pinned official Nimble manifest IDs in manifest order, excluding BoolQ; all ContractNLI test document/hypothesis pairs in source order; subtract only the explicit public decisions below. No model, tokenizer, predictions, target-based selection or replacement rows.",
+  "scope": [
+    "Frozen membership replay, not a new lexical audit or a clean-data certification.",
+    "The original audit was relative to known S0/S1 training, selection and diagnostic exposure, not pretraining clearance.",
+    "Lexical matches do not establish semantic equivalence; paraphrases and translations may be missed.",
+    "Private exposure inventories, host paths, snippets and logs are not distributed or required.",
+    "This profile materializes only the original 17-suite candidate subset (6768 rows), not the full historical 20-suite profile (19826 rows).",
+    "Inputs and targets preserve research v2 semantics; public audit/provenance scope differs from the private research package.",
+    "These public suites have previously been evaluated; this is not a blind benchmark."
+  ],
+  "historical_audit_method": {
+    "thresholds": {"exact_min_words": 3, "near_min_words": 12, "jaccard": 0.8, "containment": 0.9, "shared_words": 12, "group_min_words": 40},
+    "shingle_words": 5,
+    "candidate_caps": null,
+    "note": "Describes the historical audit, not checks re-executed by preparation. Public membership replay version is selection_version."
+  },
+  "policy_excluded_source_families": {"CLINC": "seen-source", "BoolQ": "seen-source", "ForecastBench": "retrospective forecasting"},
+  "decision_counts": {"retain": 6744, "exclude": 22, "quarantine": 2},
+  "exclusion_counts": {"group_exposure_overlap": 4, "duplicate_decision_excluded": 18, "duplicate_target_ambiguity_quarantined": 2},
+  "suites": [
+    {"name": "jevbench_public_original", "candidate_count": 72, "retained_count": 72},
+    {"name": "jevbench_public_easy", "candidate_count": 48, "retained_count": 48},
+    {"name": "jevbench_public_hard", "candidate_count": 111, "retained_count": 111},
+    {"name": "jabr_v2", "candidate_count": 866, "retained_count": 866},
+    {"name": "nimble_vitaminc-dev", "candidate_count": 599, "retained_count": 599},
+    {"name": "nimble_massive-en-US", "candidate_count": 350, "retained_count": 348},
+    {"name": "nimble_massive-de-DE", "candidate_count": 350, "retained_count": 348},
+    {"name": "nimble_squad2", "candidate_count": 299, "retained_count": 299},
+    {"name": "nimble_paws", "candidate_count": 250, "retained_count": 250},
+    {"name": "nimble_multinli", "candidate_count": 299, "retained_count": 299},
+    {"name": "nimble_civil_comments", "candidate_count": 300, "retained_count": 300},
+    {"name": "nimble_aegis2", "candidate_count": 250, "retained_count": 250},
+    {"name": "nimble_helpsteer2", "candidate_count": 249, "retained_count": 249},
+    {"name": "nimble_summeval-relevance", "candidate_count": 240, "retained_count": 237},
+    {"name": "nimble_summeval-consistency", "candidate_count": 144, "retained_count": 144},
+    {"name": "nimble_pubmedqa", "candidate_count": 250, "retained_count": 250},
+    {"name": "contractnli", "candidate_count": 2091, "retained_count": 2074}
+  ],
+  "excluded_groups": [
+    {"group_id": "contractnli/test/97", "suite": "contractnli", "decision": "exclude", "reason": "duplicate_decision", "canonical_group_id": "contractnli/test/52", "member_suffixes": ["nda-11", "nda-16", "nda-15", "nda-10", "nda-2", "nda-1", "nda-19", "nda-12", "nda-20", "nda-3", "nda-18", "nda-7", "nda-17", "nda-8", "nda-13", "nda-5", "nda-4"]}
+  ],
+  "excluded_ids": [
+    {"id": "nimble/massive-en-US/massive-258", "suite": "nimble_massive-en-US", "group_id": "nimble/massive-en-US/massive-258", "decision": "exclude", "reason": "group_exposure_overlap"},
+    {"id": "nimble/massive-en-US/massive-86", "suite": "nimble_massive-en-US", "group_id": "nimble/massive-en-US/massive-86", "decision": "exclude", "reason": "group_exposure_overlap"},
+    {"id": "nimble/massive-de-DE/massive-258", "suite": "nimble_massive-de-DE", "group_id": "nimble/massive-de-DE/massive-258", "decision": "exclude", "reason": "group_exposure_overlap"},
+    {"id": "nimble/massive-de-DE/massive-86", "suite": "nimble_massive-de-DE", "group_id": "nimble/massive-de-DE/massive-86", "decision": "exclude", "reason": "group_exposure_overlap"},
+    {"id": "nimble/summeval-relevance/summeval-relevance-dm-test-0cd10ad50ceef529d96a255ed12ac9cd001ba9db-11", "suite": "nimble_summeval-relevance", "group_id": "nimble/summeval-relevance/dm-test-0cd10ad50ceef529d96a255ed12ac9cd001ba9db", "decision": "exclude", "reason": "duplicate_decision", "canonical_id": "nimble/summeval-relevance/summeval-relevance-dm-test-0cd10ad50ceef529d96a255ed12ac9cd001ba9db-10"},
+    {"id": "nimble/summeval-relevance/summeval-relevance-dm-test-0cd10ad50ceef529d96a255ed12ac9cd001ba9db-3", "suite": "nimble_summeval-relevance", "group_id": "nimble/summeval-relevance/dm-test-0cd10ad50ceef529d96a255ed12ac9cd001ba9db", "decision": "quarantine", "reason": "duplicate_target_ambiguity"},
+    {"id": "nimble/summeval-relevance/summeval-relevance-dm-test-0cd10ad50ceef529d96a255ed12ac9cd001ba9db-4", "suite": "nimble_summeval-relevance", "group_id": "nimble/summeval-relevance/dm-test-0cd10ad50ceef529d96a255ed12ac9cd001ba9db", "decision": "quarantine", "reason": "duplicate_target_ambiguity"}
+  ],
+  "license_note": "License labels below are inherited source/converter declarations, not legal clearance or a claim that raw data may be redistributed. Consult source notices and upstream terms.",
+  "sources": [
+    {"kind": "github", "repo": "fstandhartinger/jevbench", "revision": "1bcc55eb6c8cffde2306b3db03ede39b61c6152a", "path": "core/jevbench", "include": ["datasets/public/", "jevbench/", "docs/METHOD-v1.4.md", "LICENSE", "README.md", "HARD-TIER.md"], "required": ["datasets/public/original.jsonl", "datasets/public/easy.jsonl", "datasets/public/hard.jsonl", "jevbench/cli.py", "jevbench/adapters/typesafe.py"], "license": "MIT"},
+    {"kind": "github", "repo": "jabr/classifier-benchmark", "revision": "e5057043852d57c006f0171fc0cddd8ddaf280ad", "path": "core/classifier-benchmark", "include": ["cases/v2.toml", "LICENSE", "README.md"], "required": ["cases/v2.toml"], "license": "CC0-1.0"},
+    {"kind": "github", "repo": "bespokelabsai/nimble", "revision": "62076b4f2d365b5879dafcf7f6dd072a1fe76df7", "path": "nimble/upstream", "include": ["nimble/", "docs/assets/public-benchmarks/subsets/", "docs/PUBLIC_BENCHMARKS.md", "LICENSE", "README.md"], "required": ["nimble/__init__.py", "nimble/compat.py", "nimble/paths.py", "nimble/datasets/public_benchmarks.py", "nimble/datasets/public_records.py", "nimble/evaluation/evaluate_pilot.py", "nimble/scoring/parallel_schema.py"], "license": "Consult pinned upstream LICENSE; raw source terms remain separate"},
+    {"kind": "url", "url": "https://raw.githubusercontent.com/stanfordnlp/contract-nli/eced6528dd3c1d14d73f9a87df8f7bdbc03126f9/resources/contract-nli.zip", "revision": "eced6528dd3c1d14d73f9a87df8f7bdbc03126f9", "path": "document_forecast/contract-nli.zip", "license": "CC-BY-4.0"},
+    {"kind": "url", "url": "https://raw.githubusercontent.com/TalSchuster/talschuster.github.io/152c9639f1e33ca295d0776b618c17884088f72f/static/vitaminc.zip", "path": "nimble/vitaminc.zip", "license": "CC BY-SA 3.0", "source_identity": "sha256:49d82dc1690cbee420d18e2c26f687a7937710bb211845d2571430dfd4dc0337"},
+    {"kind": "url", "url": "https://amazon-massive-nlu-dataset.s3.amazonaws.com/amazon-massive-dataset-1.1.tar.gz", "path": "nimble/amazon-massive-dataset-1.1.tar.gz", "license": "CC BY 4.0", "source_identity": "sha256:4cba5faa11c71437928e17cb1b9b3d8b8e727e7ea363a3a9a8045e19c0491577"},
+    {"kind": "url", "url": "https://cims.nyu.edu/~sbowman/multinli/multinli_1.0.zip", "path": "nimble/multinli_1.0.zip", "license": "Mixed per genre: OANC public domain; fiction and other sources CC BY-SA 3.0 or similar", "source_identity": "sha256:049f507b9e36b1fcb756cfd5aeb3b7a0cfcb84bf023793652987f7e7e0957822"},
+    {"kind": "hf", "repo": "rajpurkar/squad_v2", "revision": "3ffb306f725f7d2ce8394bc1873b24868140c412", "file": "squad_v2/validation-00000-of-00001.parquet", "path": "nimble/squad2/squad_v2/validation-00000-of-00001.parquet", "license": "CC BY-SA 4.0"},
+    {"kind": "hf", "repo": "google-research-datasets/paws", "revision": "161ece9501cf0a11f3e48bd356eaa82de46d6a09", "file": "labeled_final/test-00000-of-00001.parquet", "path": "nimble/paws/labeled_final/test-00000-of-00001.parquet", "license": "Google PAWS license: may be freely used for any purpose"},
+    {"kind": "hf", "repo": "google/civil_comments", "revision": "f2970eb3a55777454c94069077cc8d9b5866312d", "file": "data/test-00000-of-00001.parquet", "path": "nimble/civil_comments/data/test-00000-of-00001.parquet", "license": "CC0 1.0"},
+    {"kind": "hf", "repo": "nvidia/Aegis-AI-Content-Safety-Dataset-2.0", "revision": "d86bb8bedff51d25ac834ab7838f1cc61acb7a2c", "file": "test.json", "path": "nimble/aegis2/test.json", "license": "CC BY 4.0"},
+    {"kind": "hf", "repo": "nvidia/HelpSteer2", "revision": "990b2711a36180dd19d9c94b8627844866f8982a", "file": "validation.jsonl.gz", "path": "nimble/helpsteer2/validation.jsonl.gz", "license": "CC BY-4.0"},
+    {"kind": "hf", "repo": "mteb/summeval", "revision": "bfc121155064afa2d81b5505682ffc0d96f4334c", "file": "data/test-00000-of-00001-35901af5f6649399.parquet", "path": "nimble/summeval/data/test-00000-of-00001-35901af5f6649399.parquet", "license": "MIT"},
+    {"kind": "hf", "repo": "qiaojin/PubMedQA", "revision": "9001f2853fb87cab8d220904e0de81ac6973b318", "file": "pqa_labeled/train-00000-of-00001.parquet", "path": "nimble/pubmedqa/pqa_labeled/train-00000-of-00001.parquet", "license": "MIT"}
+  ]
+}
