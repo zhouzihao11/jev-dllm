@@ -1,6 +1,8 @@
 """Run input-only inference, then scoring in a separate process."""
 
 import argparse
+import math
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -27,7 +29,10 @@ def infer(args):
     successful = unsupported = 0
     try:
         log(f"Loading backend={args.backend} model={args.model_path} device={args.device}")
-        from adapters.inherited import Adapter
+        if args.backend == "kev":
+            from adapters.kev import Adapter
+        else:
+            from adapters.inherited import Adapter
 
         adapter = Adapter(args)
         log(f"Model ready after {time.monotonic() - started:.1f}s; "
@@ -96,7 +101,11 @@ def infer(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-root", required=True, type=Path)
-    parser.add_argument("--backend", required=True, choices=("dllm", "laya"))
+    parser.add_argument("--backend", required=True, choices=("dllm", "laya", "kev"))
+    parser.add_argument("--backend-python", type=Path, help="Python for inference only; scoring uses this interpreter")
+    parser.add_argument("--kev-source", type=Path, help="Local checkout containing the native kev package")
+    parser.add_argument("--base-path", type=Path, help="Existing local Kev base weights")
+    parser.add_argument("--kev-temperature", type=float, help="Diagnostic override; default is checkpoint calibration")
     parser.add_argument("--model-path", required=True)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--device", default="cuda:0")
@@ -112,6 +121,16 @@ def main():
     args = parser.parse_args()
     require(min(args.batch_size, args.max_length, args.smoke_limit, args.log_every_batches) > 0,
             "Budgets and log interval must be positive")
+    if args.backend == "kev":
+        require(args.backend_python is not None and args.kev_source is not None and args.base_path is not None,
+                "Kev requires --backend-python, --kev-source and --base-path")
+        require(args.backend_python.expanduser().is_file(), "Missing backend Python executable")
+        require((args.kev_source.expanduser() / "kev" / "checkpoint.py").is_file(), "Missing native Kev source")
+        require(args.base_path.expanduser().is_dir() and Path(args.model_path).expanduser().is_dir(),
+                "Kev requires existing local base and adapter directories")
+        require(args.batch_size == 1 and args.dtype == "float32", "Kev requires --batch-size 1 --dtype float32")
+        require(args.kev_temperature is None or math.isfinite(args.kev_temperature) and args.kev_temperature > 0,
+                "Kev temperature must be finite and positive")
     if args.inference_child:
         infer(args)
         return 0
@@ -130,19 +149,31 @@ def main():
     save(output / "run.json", run)
     log(f"Evaluation START profile={manifest['profile_id']} decisions={len(expected)} "
         f"smoke={args.smoke} output={output}")
-    command = [sys.executable, str(Path(__file__).resolve()), "--inference-child",
+    backend_python = str(args.backend_python.expanduser().absolute()) if args.backend_python else sys.executable
+    command = [backend_python, str(Path(__file__).resolve()), "--inference-child",
                "--data-root", str(args.data_root.expanduser().resolve()), "--output-dir", str(output),
                "--backend", args.backend, "--model-path", str(Path(args.model_path).expanduser().resolve()),
                "--device", args.device, "--dtype", args.dtype, "--batch-size", str(args.batch_size),
                "--max-length", str(args.max_length), "--smoke-limit", str(args.smoke_limit),
                "--log-every-batches", str(args.log_every_batches)]
+    if args.backend_python:
+        command.extend(["--backend-python", backend_python])
+    if args.backend == "kev":
+        command.extend(["--kev-source", str(args.kev_source.expanduser().resolve()),
+                        "--base-path", str(args.base_path.expanduser().resolve())])
+        if args.kev_temperature is not None:
+            command.extend(["--kev-temperature", str(args.kev_temperature)])
+    child_env = None
+    if args.backend_python:
+        child_env = dict(os.environ, PYTHONNOUSERSITE="1")
+        child_env.pop("PYTHONPATH", None)
     if args.smoke:
         command.append("--smoke")
     phase = "inference"
     try:
         run["phases"][phase] = "running"
         save(output / "run.json", run)
-        result = subprocess.run(command, check=False)
+        result = subprocess.run(command, check=False, env=child_env)
         run["inference_exit_code"] = result.returncode
         require(result.returncode == 0, "Inference child failed; partial evidence retained; no scoring")
         info = load(output / "inference.json")

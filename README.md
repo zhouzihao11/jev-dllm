@@ -2,7 +2,7 @@
 
 在每个候选旁放置 mask，用 masked diffusion language model 的共享 Yes/No 权重读取结构化概率：动态选择、二元判断和有序评分。无需生成答案文本，也不需要先训练即可体验。
 
-[代码](https://github.com/zhouzihao11/jev-dllm) · [S1 模型](https://huggingface.co/SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S1) · [实验结果表](docs/experiment_results.md) · [结果与限制](docs/results.md)
+[代码](https://github.com/zhouzihao11/jev-dllm) · [S1 模型](https://huggingface.co/SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S1) · [实验结果表](docs/experiment_results.md) · [结果与限制](docs/results.md) · [Kev 五模型比较](docs/kev_comparison.md)
 
 ## 1. 安装
 
@@ -79,11 +79,45 @@ curl --fail http://127.0.0.1:8000/v1/systemone \
 
 返回 `answers.sentiment.choice` 和以原始候选字符串为键的 `probabilities`。这是原生 shared Yes/No 读出，不是从生成文本伪造概率。三种问题格式与限制见 [HTTP 协议](benchmark/JEVBENCH.md)；服务用 Python 标准库，无需 FastAPI。
 
+## 6. 可选 Kev-0.8B 比较
+
+Kev 是独立的原生概率头对照，不改变上述 S1 安装、下载、评测和 HTTP quickstart。按 [Kev 复现流程](benchmark/KEV.md)准备固定代码/模型和独立依赖环境，无需启动完整上游 serve；主 `requirements.txt` 不包含 Kev 专用版本。
+
+```bash
+export KEV_DIR="$HOME/model-resources/jev-dllm-kev"
+python scripts/prepare_kev.py --output-dir "$KEV_DIR"
+```
+
+保持原 benchmark 环境不变，另建 Python 3.12 环境并安装可选依赖；安装细节与限制见上述复现流程：
+
+```bash
+conda create -y -n kev-eval python=3.12
+PYTHONNOUSERSITE=1 conda run -n kev-eval python -m pip install -r benchmark/requirements-kev.txt
+export KEV_PYTHON="$(conda run -n kev-eval python -c 'import sys; print(sys.executable)')"
+```
+
+再从原 benchmark 环境启动；推理使用 `KEV_PYTHON`，评分仍在原环境执行：
+
+```bash
+python benchmark/evaluate.py \
+  --data-root "$CORE_DATA" --backend kev \
+  --backend-python "${KEV_PYTHON:?set from benchmark/KEV.md}" \
+  --kev-source "$KEV_DIR/source" \
+  --base-path "$KEV_DIR/models/base" \
+  --model-path "$KEV_DIR/models/kev-0.8b" \
+  --output-dir "$PWD/outputs/core-kev" --device cuda:0 --dtype float32 \
+  --batch-size 1 --max-length 4096
+```
+
+输出目录必须不存在；可另用新目录加 `--smoke --smoke-limit 3`。不传 `--kev-temperature`，保留 checkpoint 校准。该命令运行完整 Core17 并保留所有覆盖记录，发布质量比较再按下面来源范围筛选，不静默删样本。旧版 typed-decisions 的单独准备与运行命令也见 [Kev 复现流程](benchmark/KEV.md)。
+
+[比较结果](docs/kev_comparison.md)仅列 Core14（排除已确认训练见源 MultiNLI/Aegis2 与开发接触 PAWS），另列 legacy typed-decisions；保留项未确认来源重叠，不等于保证无污染。其他四模型保留旧 renderer 预测，Kev 用 checkpoint 温度，不能混入较新的 JevBench HTTP 结果、解释为架构因果或公平吞吐排名。历史 Kev 推理成功不代表本次发布迁移已重新运行验证。
+
 ## 更多
 
 - [Core 操作与输出](benchmark/README.md)、[数据卡](benchmark/DATA_CARD.md)、[重叠审计范围](docs/overlap_audit.md)
 - [官方 JevBench 公开 231 题流程](docs/jevbench_public.md)：先验证，再通过官方 CLI 运行；不含 sealed 或排行榜提交
-- [四模型 Core 与公开 HTTP 结果](docs/results.md)：同时报告准确率、校准和失败覆盖
+- [五模型来源筛选比较与既有公开 HTTP 结果](docs/results.md)：同时报告准确率、校准、失败覆盖和协议边界
 - [S0/S1 训练](docs/training.md)、[旧版六套 benchmark / 恢复 API](docs/reproduce.md)（legacy，不是本页 Core 命令）
 - [研究博客（历史背景）](docs/blog_zh.md)、[旧数据与模型参考](docs/data_and_models.md)、[字段说明](docs/SCHEMA.md)
 

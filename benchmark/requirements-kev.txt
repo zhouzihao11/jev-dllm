@@ -1,0 +1,10 @@
+# Optional isolated Python 3.12 runtime. Never install into prm/main environment.
+# Versions used in the research environment; not a cross-platform install lock.
+torch==2.8.0
+transformers==5.17.0
+peft==0.21.0
+accelerate==1.15.0
+pydantic==2.13.5
+numpy==2.5.3
+safetensors==0.8.0
+einops==0.8.2

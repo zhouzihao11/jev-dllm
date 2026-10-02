@@ -42,3 +42,9 @@
 | SST5 | [Stanford Sentiment Treebank](https://nlp.stanford.edu/sentiment/) | 具体使用导出及许可未完整锁定，不推断通用再分发许可 |
 
 仓库不含完整 raw 上游 train、模型权重、示例预测或运行日志。依赖库由使用者另行安装，其许可证各自适用。
+
+## Optional Native Kev Acquisition
+
+- Native Kev code: [jaredpalmer/kev](https://github.com/jaredpalmer/kev), commit `3e1cd3bb588a388a06827443380befece23e68c7`, Apache-2.0, Copyright 2026 Jared Palmer. `scripts/prepare_kev.py` acquires the unchanged inference module subset and preserves upstream `LICENSE`, `README.md`, and `NOTICE` if present outside this repository. The adapter calls these modules; it does not redistribute their implementation or use the serving process.
+- Kev adapter/head/tokenizer: [jaredpalmer/kev-0.8b](https://huggingface.co/jaredpalmer/kev-0.8b), revision `9a45d25eb2ab761841196625383fa1dff0e56c1e`; base: [Qwen/Qwen3.5-0.8B-Base](https://huggingface.co/Qwen/Qwen3.5-0.8B-Base), revision `dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68`. These external weights and tokenizers are not included in Git. Consult the pinned model cards and licenses; the code license does not relicense models or their training data.
+- [Native Kev instructions](benchmark/KEV.md) describe the isolated optional runtime, exact acquisition revisions, native rendering/calibration, and known training/development-source contact. No new rights or unseen-data certification are asserted.

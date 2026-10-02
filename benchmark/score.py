@@ -5,7 +5,7 @@ from collections import defaultdict
 import math
 from pathlib import Path
 
-from common import (bundled, exact, indexed, inherited, input_bundle, load, require,
+from common import (LEGACY_REFERENCE_SCOPES, bundled, exact, indexed, inherited, input_bundle, load, require,
                     rows, save, selected_inputs, source_profile, validate_target)
 
 
@@ -124,12 +124,21 @@ def main():
                 "Invalid provenance")
         require(decisions[identity]["group_id"] == prov["group_id"]
                 and decisions[identity]["suite"] == item["suite"], "Audit group mismatch")
-        validate_target(target, item["qdef"])
+        metadata = prov["metadata"]
+        require(isinstance(metadata, dict), "Invalid target metadata")
+        reference = metadata.get("soft_target_kind") == "reference-distribution"
+        if reference:
+            require(manifest["profile_id"] != "core_v1_candidate"
+                    and manifest.get("dataset_scope") in LEGACY_REFERENCE_SCOPES
+                    and metadata.get("dataset_scope") == manifest["dataset_scope"],
+                    "Reference distributions require matching legacy bundle scope")
+        validate_target(target, item["qdef"], metadata=metadata if reference else None)
         row = dict(id=identity, state=item["state"], qdef=item["qdef"],
                    group_id=prov["group_id"], metadata=prov["metadata"],
                    **{k: target[k] for k in ("gold_idx", "soft", "gold_score", "option_ids")})
         validated[identity] = dict(backend.validate_row(row, identities), suite=item["suite"])
     if args.historical_root is not None:
+        require(manifest["profile_id"] == "core_v1_candidate", "Historical reuse supports Core only")
         require(not args.smoke and args.run_manifest is None, "Historical mode rescoring is full retained core only")
         predictions, label = historical(args, manifest, inputs, targets, provenance, backend)
     else:
@@ -171,7 +180,9 @@ def main():
                                      full_status="not_full_smoke" if args.smoke else status,
                                      smoke=args.smoke, mode=label, attempted=len(records),
                                      metric_definitions=definitions, suites=reports,
-                                     overall_winner=None, selection="full retained core" if not args.smoke else "smoke prefix only"))
+                                     overall_winner=None, selection=("smoke prefix only" if args.smoke else
+                                         "full retained core" if manifest["profile_id"] == "core_v1_candidate"
+                                         else "full legacy typed decisions")))
 
 
 if __name__ == "__main__":

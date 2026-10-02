@@ -119,10 +119,19 @@ def validate_row(row, identities):
             and len(set(ids)) == k, "option_ids must uniquely identify rendered options in order")
     gold, soft, score = row["gold_idx"], row["soft"], row["gold_score"]
     require(gold is None or type(gold) is int and 0 <= gold < k, "gold_idx out of range")
+    meta = row["metadata"]
+    tolerance = 1e-6
+    if isinstance(meta, dict) and meta.get("soft_target_kind") == "reference-distribution":
+        require(meta.get("dataset_scope") in ("legacy_typed_decisions_not_audited_core",
+                                             "legacy_external_not_audited_core"),
+                "reference distributions require a legacy scope")
+        decimals = meta.get("soft_target_rounding_decimals")
+        require(type(decimals) is int and 6 <= decimals <= 15, "invalid reference rounding precision")
+        tolerance = max(tolerance, k * 0.5 * 10 ** -decimals + 1e-12)
     if soft is not None:
         require(isinstance(soft, list) and len(soft) == k
                 and all(number(x) and 0 <= x <= 1 for x in soft)
-                and abs(math.fsum(soft) - 1) <= 1e-6, "invalid soft target")
+                and abs(math.fsum(soft) - 1) <= tolerance, "invalid soft target")
     if score is not None:
         require(q["type"] == "score" and number(score) and 0 <= score <= k - 1,
                 "gold_score must be a zero-based expected level in range")
@@ -134,7 +143,7 @@ def validate_row(row, identities):
                 for k in ("source", "adaptation")), "source/adaptation must be nonempty text or objects")
     require("task_id" not in meta or text(meta["task_id"]), "invalid metadata.task_id")
     if soft is not None:
-        require(meta.get("soft_target_kind") in ("human-votes", "exact-mechanism"),
+        require(meta.get("soft_target_kind") in ("human-votes", "exact-mechanism", "reference-distribution"),
                 "soft targets require metadata.soft_target_kind")
     return dict(row, options=options, primitive=q["type"])
 

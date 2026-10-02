@@ -1,12 +1,22 @@
 # 结果与限制
 
-以下为已完成研究运行报告的数值整理。Core 和官方 JevBench HTTP 是两种不同协议，分别报告；发布副本已经独立完成来源重建、四模型 smoke、S1 全量与 HTTP 复现，质量结果一致，见[验证记录](release_validation.md)。没有使用这些结果拟合温度或为本次公开集重新选择 checkpoint。
+以下为已完成研究运行报告的数值整理，包含既有四模型与新增 Kev-0.8B 比较。Core 和官方 JevBench HTTP 是两种不同协议，分别报告；既有发布副本已经独立完成来源重建、四模型 smoke、S1 全量与 HTTP 复现，质量结果一致，见[验证记录](release_validation.md)。该验证不覆盖新增 Kev 发布迁移；没有使用这些结果拟合温度或为本次公开集重新选择 checkpoint。
 
 模型身份：base 为 [Qwen3-0.6B diffusion MDLM](https://huggingface.co/dllm-hub/Qwen3-0.6B-diffusion-mdlm-v0.1)，revision `c8d24a3f4adaeef46881b450e1bf7d1005203bd7`；[S0](https://huggingface.co/SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S0) revision `265560cdcea68443fed89525437f4be7235574db`；[S1](https://huggingface.co/SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S1) revision `1f1c29ff9fc6f6e9dc066b03089878a7dab8b6a0`。Laya-base 是继承的原生对照，不是另一份 S1。
 
-## Core：覆盖与配置
+## Kev-0.8B：来源筛选后的比较
 
-固定 17 套、6,744 条成员。base、S0 和 Laya 为新推理，合并已完成的 S1 运行；不是只重评分旧预测。上限 4,096 tokens，不截断。
+[五模型比较表与解释](kev_comparison.md)报告 Core14 和另列的 legacy typed-decisions：从原 Core17 排除 Kev 梯度训练见源的 MultiNLI、Aegis2，以及开发接触的 PAWS。保留项是“未确认训练或开发来源重叠”，并非保证无污染；Kev 预训练重叠未知，私有基础模型梯度训练资料不完全可得。Legacy 的已知训练/开发来源不补填 Kev 值。
+
+其他四模型沿用下面的旧 published renderer 预测，S1 Core JevBench 为 batch32 数据集指标，不是官方 sealed 指标。Kev FP32 batch1 使用 checkpoint 温度 `2.3510958125672174`，其他四模型维持 T=1。ContractNLI 五模型共同成功仍为 1,819 条；不能与下面独立的较新 T=1 HTTP 协议混用。
+
+Nimble9（排除上述三项）的等子集诊断平均：S1/Kev ACC 为 60.88%/55.53%，ECE15 为 14.90%/15.76%，NLL 为 1.1065/1.0285，Brier 为 0.5173/0.5372。Kev 在 Jabr 和 MASSIVE de-DE 更强，部分任务 NLL 更好，但没有全面优势；S0 在 ContractNLI 仍更好。15 行逐套 ACC 中 S1 高于 Kev 10 项、Kev 高于 S1 4 项、1 项持平，仅为描述性计数，不是显著性检验或跨 15 套总体排名。
+
+0.6B/0.8B backbone、训练数据、预测头、renderer、dtype 与校准不相等，不作架构因果归因或公平速度比值。Kev 使用未优化 FP32 reference kernels。历史研究记录的 51 条 native parity 最大概率差为 0；新增发布副本未重新执行 Kev 推理。固定 revisions、完整 ACC/ECE/NLL/Brier、score MAE/RPS 和可选复现入口见[Kev 比较页](kev_comparison.md)。
+
+## 既有四模型 Core：覆盖与配置
+
+固定 17 套、6,744 条成员。原四模型研究阶段 base、S0 和 Laya 为新推理，合并已完成的 S1 运行；本次 Kev 比较复用这些固定预测，不重新运行其他四模型。上限 4,096 tokens，不截断。以下 Core17/Nimble12 历史表不是新增 Kev 的来源筛选范围。
 
 | 模型 | 精度 | batch | 尝试 | 成功 | 超长 unsupported |
 |---|---|---:|---:|---:|---:|

@@ -101,8 +101,21 @@ def option_count(qdef):
     return len(criteria)
 
 
-def validate_target(row, qdef):
+LEGACY_REFERENCE_SCOPES = ("legacy_typed_decisions_not_audited_core",
+                           "legacy_external_not_audited_core")
+
+
+def validate_target(row, qdef, metadata=None):
     k = option_count(qdef)
+    tolerance = 1e-6
+    if metadata is not None:
+        require(isinstance(metadata, dict), "Invalid target metadata")
+        if metadata.get("soft_target_kind") == "reference-distribution":
+            require(metadata.get("dataset_scope") in LEGACY_REFERENCE_SCOPES,
+                    "Reference distributions require a legacy scope")
+            decimals = metadata.get("soft_target_rounding_decimals")
+            require(type(decimals) is int and 6 <= decimals <= 15, "Invalid reference rounding precision")
+            tolerance = max(tolerance, k * 0.5 * 10 ** -decimals + 1e-12)
     ids = row["option_ids"]
     require(isinstance(ids, list) and len(ids) == k
             and all(isinstance(x, str) and x.strip() for x in ids)
@@ -113,7 +126,7 @@ def validate_target(row, qdef):
     if soft is not None:
         require(isinstance(soft, list) and len(soft) == k
                 and all(numeric(x) and 0 <= x <= 1 for x in soft)
-                and abs(math.fsum(soft) - 1) <= 1e-6, "Invalid soft target")
+                and abs(math.fsum(soft) - 1) <= tolerance, "Invalid soft target")
     require(score is None or qdef["type"] == "score" and numeric(score)
             and 0 <= score <= k - 1, "Invalid scalar target")
     require(any(x is not None for x in (gold, soft, score)), "Missing target")
@@ -154,8 +167,12 @@ def source_profile(path):
 def input_bundle(root):
     root = Path(root).expanduser().resolve()
     manifest = load(root / "manifest.json")
+    legacy_typed = (manifest.get("profile_id") == "legacy_typed_decisions_v1"
+                    and manifest.get("dataset_scope") == "legacy_typed_decisions_not_audited_core"
+                    and manifest.get("source_profile_id") == "full_test_v1_20260923_r2")
     require(manifest.get("schema_version") == "benchmark_core_v1"
-            and manifest.get("profile_id") == "core_v1_candidate", "Wrong bundle schema/profile")
+            and (manifest.get("profile_id") == "core_v1_candidate" or legacy_typed),
+            "Wrong bundle schema/profile")
     data = rows(bundled(root, manifest["files"]["inputs"]))
     indexed(data)
     counts = Counter()

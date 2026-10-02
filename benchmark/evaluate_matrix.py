@@ -20,6 +20,8 @@ def main():
     args = parser.parse_args()
     models = load(args.models)
     require(isinstance(models, list) and models, "Expected nonempty model list")
+    require(args.batch_size == 1 or not any(model["backend"] == "kev" for model in models),
+            "Kev requires global --batch-size 1; run batch-32 DLLM/Laya separately")
     names = [model["name"] for model in models]
     require(len(set(names)) == len(names) and all(
         isinstance(name, str) and name and all(c.isascii() and (c.isalnum() or c in "_-") for c in name)
@@ -33,9 +35,12 @@ def main():
                    "--data-root", str(args.data_root.expanduser().resolve()),
                    "--backend", model["backend"], "--model-path", model["model_path"],
                    "--device", model.get("device", "cuda:0"),
-                   "--dtype", model.get("dtype", "bfloat16"),
+                   "--dtype", model.get("dtype", "float32" if model["backend"] == "kev" else "bfloat16"),
                    "--batch-size", str(args.batch_size), "--max-length", str(args.max_length),
                    "--smoke-limit", str(args.smoke_limit), "--output-dir", str(output / model["name"])]
+        for key in ("backend_python", "kev_source", "base_path", "kev_temperature"):
+            if model.get(key) is not None:
+                command.extend(["--" + key.replace("_", "-"), str(model[key])])
         if args.smoke:
             command.append("--smoke")
         task = dict(model=model["name"], command=command, status="running")
