@@ -4,6 +4,10 @@
 
 模型身份：base 为 [Qwen3-0.6B diffusion MDLM](https://huggingface.co/dllm-hub/Qwen3-0.6B-diffusion-mdlm-v0.1)，revision `c8d24a3f4adaeef46881b450e1bf7d1005203bd7`；[S0](https://huggingface.co/SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S0) revision `265560cdcea68443fed89525437f4be7235574db`；[S1](https://huggingface.co/SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S1) revision `1f1c29ff9fc6f6e9dc066b03089878a7dab8b6a0`。Laya-base 是继承的原生对照，不是另一份 S1。
 
+## 后续已完成结果：Dream zero-shot 与 S1 校准
+
+[Dream-7B zero-shot](dream_zero_shot.md)新增固定Core14、5690共同成功ID比较：无项目微调、T1时等套ACC64.08%、ECE15 17.74%、NLL0.9186、Brier0.4817。相较0.6B base更好，与S1总体ACC接近，但不是纯规模因果或所有任务均改善；本页下方历史表保持不变。另见[S1六套全局温度校准](temperature_calibration.md)，其校准后概率指标不混入下方历史T1/HTTP表。这两项仅发布结果说明，没有改变公开默认运行入口；Dream后续微调不属于zero-shot结果。
+
 ## Kev-0.8B：来源筛选后的比较
 
 [五模型比较表与解释](kev_comparison.md)报告 Core14 和另列的 legacy typed-decisions：从原 Core17 排除 Kev 梯度训练见源的 MultiNLI、Aegis2，以及开发接触的 PAWS。保留项是“未确认训练或开发来源重叠”，并非保证无污染；Kev 预训练重叠未知，私有基础模型梯度训练资料不完全可得。Legacy 的已知训练/开发来源不补填 Kev 值。
