@@ -2,7 +2,7 @@
 
 在每个候选旁放置 mask，用 masked diffusion language model 的共享 Yes/No 权重读取结构化概率：动态选择、二元判断和有序评分。无需生成答案文本，也不需要先训练即可体验。
 
-[代码](https://github.com/zhouzihao11/jev-dllm) · [S1 模型](https://huggingface.co/SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S1) · [实验结果表](docs/experiment_results.md) · [结果与限制](docs/results.md) · [Kev 五模型比较](docs/kev_comparison.md)
+[代码](https://github.com/zhouzihao11/jev-dllm) · [S1 模型](https://huggingface.co/SEU-ZZH/Shared-YesNo-Qwen3-0.6B-S1) · [实验结果表](docs/experiment_results.md) · [结果与限制](docs/results.md) · [Kev 五模型比较](docs/kev_comparison.md) · [S1 温度校准](docs/temperature_calibration.md)
 
 ## 1. 安装
 
@@ -115,6 +115,7 @@ python benchmark/evaluate.py \
 
 ## 更多
 
+- [S1 全局温度校准与 Core14 比较](docs/temperature_calibration.md)：六套拟合 T=1.87397；同分母平均 ECE15 10.33%、NLL 0.8808、Brier 0.4637；部分任务退化。仅发布后处理结果，默认评测/HTTP 仍为 T=1。
 - [Core 操作与输出](benchmark/README.md)、[数据卡](benchmark/DATA_CARD.md)、[重叠审计范围](docs/overlap_audit.md)
 - [官方 JevBench 公开 231 题流程](docs/jevbench_public.md)：先验证，再通过官方 CLI 运行；不含 sealed 或排行榜提交
 - [五模型来源筛选比较与既有公开 HTTP 结果](docs/results.md)：同时报告准确率、校准、失败覆盖和协议边界
