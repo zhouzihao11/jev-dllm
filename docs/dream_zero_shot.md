@@ -2,7 +2,7 @@
 
 2026-10-09 完成的研究评测。使用已发布的 Dream Instruct 权重，将同一个共享 Yes/No 决策方法迁移到 Dream：**不做项目微调，不训练额外头，不拟合温度，不生成答案文本**。
 
-**本页只报告已完成的 zero-shot 结果，不补填后续微调数字。** 原生 Dream CLI、训练代码和后续结果现见 [Dream-S1](dream_s1.md)；该发布迁移尚待远程验证。现有 quickstart / HTTP 默认行为保持不变，本页历史验证不代替新入口的发布验证。
+**本页只报告已完成的 zero-shot 结果，不补填后续微调数字。** 原生 Dream CLI、训练代码和后续结果现见 [Dream-S1](dream_s1.md)；该发布迁移仅做静态检查，未重新训练或运行额外评测。现有 quickstart / HTTP 默认行为保持不变，本页历史验证不代替新入口的发布验证。
 
 ## 1. 固定模型与执行协议
 
@@ -130,6 +130,6 @@ Nimble9单独等子集诊断：Dream ACC61.28%、ECE20.44%、NLL1.0432、Brier0.
 3. 模型间精度、温度和头计算路径不同；NLL/Brier同时受预测能力与校准影响，不把全部差异归因于校准或架构。
 4. Core的JevBench行使用ECE15及旧renderer，不与HTTP ECE10、较新noul模板或sealed结果混合。
 5. 本次没有checkpoint选择、温度拟合、显著性检验或多seed结论，也没有根据Core结果再改prompt。
-6. 本页历史发布仅为结果文档；后续原生Dream推理/训练入口见 [Dream-S1](dream_s1.md)，新迁移尚未远程验证，现有模型和HTTP默认行为不变。后续微调是独立实验，不补填本页zero-shot结果。
+6. 本页历史发布仅为结果文档；后续原生Dream推理/训练入口见 [Dream-S1](dream_s1.md)，新迁移仅做静态检查，未重新执行训练或评测，现有模型和HTTP默认行为不变。后续微调是独立实验，不补填本页zero-shot结果。
 
 聚合结果同列于[统一实验表](experiment_results.md)。Core成员与来源说明见[数据卡](../benchmark/DATA_CARD.md)和[来源条款](benchmark_sources.md)。原始预测、私有日志和服务器路径不随本页公开。

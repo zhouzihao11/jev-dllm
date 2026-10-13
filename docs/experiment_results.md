@@ -312,7 +312,7 @@
 | 训练时间 | 296974.386642秒，约82.49小时；含dev/save、硬件特定，不作速度比较 |
 | 复载验证 | 两次完整1000dev概率/KL相对selected reference差精确0；identity/shape/target/argmax差0 |
 | 独立指标复核 | Core四位小数metrics最大差0，logit概率差4.44e-16；Breadth差≤7.105e-15 |
-| 新发布边界 | [Dream-S1代码、CLI与完整说明](dream_s1.md)；原生Dream训练/评测入口现已迁移，修正上方历史“未迁移”说明；本次迁移尚待远程验证 |
+| 新发布边界 | [Dream-S1代码、CLI与完整说明](dream_s1.md)；原生Dream训练/评测入口现已迁移，修正上方历史“未迁移”说明；本次只做静态检查，未重新训练或执行额外评测 |
 | 不发布 | Dream-S1权重、数据、原始标签/文本/预测、机器日志、私有路径或服务器身份 |
 
 | Dream-S1：Core14共同5690成功、14套等权 | ACC (%) | ECE15 (%) | NLL | Brier(sum) |

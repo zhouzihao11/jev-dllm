@@ -115,7 +115,7 @@ python benchmark/evaluate.py \
 
 ## 更多
 
-- [Dream-S1 训练、Core14 与 Breadth-v1](docs/dream_s1.md)：dev选定step2500，Core共同成功ACC70.72%；官方Breadth指数36.2082。校准/概率迁移混合；发布源码和聚合结果，不上传权重，本次迁移尚待远程验证。
+- [Dream-S1 训练、Core14 与 Breadth-v1](docs/dream_s1.md)：dev选定step2500，Core共同成功ACC70.72%；官方Breadth指数36.2082。校准/概率迁移混合；发布源码和已完成实验的聚合结果，不上传权重。本次迁移仅做静态检查，不重新训练或执行额外评测。
 - [Dream-7B zero-shot Core14](docs/dream_zero_shot.md)：同分母平均ACC64.08%、ECE15 17.74%、NLL0.9186、Brier0.4817；相较0.6B base更强，与S1总体ACC接近。zero-shot历史结果保持不变；原生Dream入口见Dream-S1页。
 - [S1 全局温度校准与 Core14 比较](docs/temperature_calibration.md)：六套拟合 T=1.87397；同分母平均 ECE15 10.33%、NLL 0.8808、Brier 0.4637；部分任务退化。仅发布后处理结果，默认评测/HTTP 仍为 T=1。
 - [Core 操作与输出](benchmark/README.md)、[数据卡](benchmark/DATA_CARD.md)、[重叠审计范围](docs/overlap_audit.md)

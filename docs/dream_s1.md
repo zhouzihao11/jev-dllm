@@ -2,7 +2,7 @@
 
 本页发布已完成研究运行的**聚合结果、训练源码及原生评测入口**。Dream-S1 在本协议下提升 Core14 硬准确率和官方 Breadth 指数，但概率、校准和有序评分的迁移是混合的，不是全面质量改善，也不是架构因果结论。
 
-**发布迁移状态：尚未完成远程 smoke 验证。** 下述训练、导出复载和完整评测数字来自既有研究运行，不是公开仓库重新训练所得。历史成功不等于本次公开迁移已验证；维护者将在独立远程验证后更新本段。本次不上传 Dream-S1 checkpoint、数据、原始标签/文本/预测、机器日志、服务器身份或私有路径，不承诺存在可下载的 Dream-S1 权重。既有 0.6B quickstart 和 HTTP 默认行为不变；不新增 Dream HTTP。
+**发布检查范围：源码静态检查，未重新训练。** 下述训练、导出复载和完整评测数字来自已完成的研究运行，不是公开仓库重新训练所得。本次按发布要求不重新训练，也不执行迁移版训练预检或额外评测；历史成功不等于这份公开迁移已经通过独立运行验证。本次不上传 Dream-S1 checkpoint、数据、原始标签/文本/预测、机器日志、服务器身份或私有路径，不承诺存在可下载的 Dream-S1 权重。既有 0.6B quickstart 和 HTTP 默认行为不变；不新增 Dream HTTP。
 
 ## 1. 来源、依赖与调用者输入
 
@@ -195,4 +195,4 @@ Contract主score68/160=42.50%含20unsupported错误；answered68/140=48.5714%。
 
 Dream原始读出位置依据 [固定generation_utils.py](https://huggingface.co/Dream-org/Dream-v0-Instruct-7B/blob/05334cb9faaf763692dcf9d8737c642be2b2a6ae/generation_utils.py)。公开实现见 [trainer](../research/scripts/train_dream_masked_typed.py)、[小型training helper](../research/scripts/dream_training.py)、[独立verifier](../research/scripts/verify_dream_export.py)、[native adapter](../benchmark/adapters/dream.py) 和 [Breadth bridge](../benchmark/breadth.py)。继承来源为 [NandhaKishorM/laya](https://github.com/NandhaKishorM/laya)；归属和许可见 [THIRD_PARTY](../THIRD_PARTY.md)。仅抽出原probe的CandidateWrapper和memory，不迁移整个诊断/审计probe；既有公共projection和loader默认行为保留。
 
-发布仅源码和聚合文档；受限数据、checkpoint、自定义上游模型代码及逐题证据均由调用者另行授权获取和保存。本地完成的检查仅AST语法与diff/敏感路径审阅；尚未对本次公开迁移执行远程训练preflight、resume、export复载、Core42或Breadth bridge smoke，维护者验证后需明确更新结果及其覆盖范围，不把历史结果当成这些新检查。
+发布仅源码和聚合文档；受限数据、checkpoint、自定义上游模型代码及逐题证据均由调用者另行授权获取和保存。本次公开迁移完成AST语法与diff/敏感路径审阅，没有重新执行训练preflight、resume、export复载、Core42或Breadth bridge smoke，不把历史研究结果当作这些新检查。上文命令供调用者复现，不代表本次发布又启动了一轮训练。
