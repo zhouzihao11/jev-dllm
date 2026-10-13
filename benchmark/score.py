@@ -94,13 +94,15 @@ def main():
     all_ids = {r["id"] for r in inputs}
     require(set(targets) == set(provenance) == all_ids, "Bundle target/provenance IDs differ")
     selected = inputs
+    selected_suites = None
     if args.run_manifest is not None:
         run = load(args.run_manifest)
         require(run["profile_id"] == manifest["profile_id"]
                 and run["source_profile_id"] == manifest["source_profile_id"]
                 and run["smoke"] == args.smoke and run["phases"]["inference"] == "complete",
                 "Run manifest mismatch or unfinished inference")
-        selected = selected_inputs(inputs, args.smoke, run["smoke_limit"])
+        selected_suites = run.get("selected_suites")
+        selected = selected_inputs(inputs, args.smoke, run["smoke_limit"], selected_suites)
         require(run["expected_ids"] == [r["id"] for r in selected], "Invalid expected ID selection")
     else:
         require(not args.smoke, "Smoke scoring requires explicit --run-manifest expected_ids")
@@ -159,6 +161,8 @@ def main():
                             forward_seconds=pred.get("forward_seconds", 0.0)))
     reports = {}
     for spec in manifest["suites"]:
+        if selected_suites is not None and spec["name"] not in selected_suites:
+            continue
         suite_rows = [r for r in records if r["suite"] == spec["name"]]
         report = dict(source_count=spec["count"], retained_count=spec["retained_count"],
                       planned_count=len(suite_rows), metrics=backend.summarize(suite_rows, groups[spec["name"]]))
@@ -181,6 +185,7 @@ def main():
                                      smoke=args.smoke, mode=label, attempted=len(records),
                                      metric_definitions=definitions, suites=reports,
                                      overall_winner=None, selection=("smoke prefix only" if args.smoke else
+                                         "selected retained suite run" if selected_suites is not None else
                                          "full retained core" if manifest["profile_id"] == "core_v1_candidate"
                                          else "full legacy typed decisions")))
 

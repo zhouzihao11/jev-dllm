@@ -302,3 +302,83 @@
 | Laya-base | 0.884390 | 0.594050 |
 | Kev-0.8B | 0.768401 | 0.468446 |
 | Dream zero-shot T1 | 0.792387 | 0.524521 |
+
+| Dream-S1：正式训练与选择 | 结果 / 限制 |
+|---|---|
+| 原模型 | Dream-org/Dream-v0-Instruct-7B；revision 05334cb9faaf763692dcf9d8737c642be2b2a6ae |
+| 数据 / 配方 | 原始S1 train40000 / 原始dev1000；3epochs；global32 / micro1；FULL_SHARD BF16 AdamW；CE+0.25normalized ordinal RPS |
+| 完成 / 选定 | 完成3750updates / 3epochs；选定2500为第二epoch终点，不是最后权重 |
+| 原始dev mean KL | selected2500=0.1459667972254464；last3750=0.20896177570950744 |
+| 训练时间 | 296974.386642秒，约82.49小时；含dev/save、硬件特定，不作速度比较 |
+| 复载验证 | 两次完整1000dev概率/KL相对selected reference差精确0；identity/shape/target/argmax差0 |
+| 独立指标复核 | Core四位小数metrics最大差0，logit概率差4.44e-16；Breadth差≤7.105e-15 |
+| 新发布边界 | [Dream-S1代码、CLI与完整说明](dream_s1.md)；原生Dream训练/评测入口现已迁移，修正上方历史“未迁移”说明；本次迁移尚待远程验证 |
+| 不发布 | Dream-S1权重、数据、原始标签/文本/预测、机器日志、私有路径或服务器身份 |
+
+| Dream-S1：Core14共同5690成功、14套等权 | ACC (%) | ECE15 (%) | NLL | Brier(sum) |
+|---|---:|---:|---:|---:|
+| Dream-S1 selected2500 | 70.72 | 17.53 | 0.8753 | 0.4320 |
+| Dream zero-shot | 64.08 | 17.74 | 0.9186 | 0.4817 |
+| Dream-S1 interim600，未选，不用test选择 | 68.07 | 12.08 | 0.7517 | 0.4080 |
+| 0.6B S1 T1 | 63.97 | 14.92 | 0.9890 | 0.4851 |
+| 0.6B S1 frozen calibration | 63.97 | 10.33 | 0.8808 | 0.4637 |
+| Kev0.8B | 60.31 | 14.30 | 0.9160 | 0.4921 |
+| Kev-data0.6B fixed endpoint（聚合背景） | 62.55 | 13.46 | 0.9781 | 0.4986 |
+
+| Dream-S1 Core14：共同成功逐套 | Common N | Final ACC% | Zero ACC% | Final ECE15% | Final NLL | Final Brier |
+|---|---:|---:|---:|---:|---:|---:|
+| Jev original | 72 | 97.22 | 75.00 | 3.83 | 0.0617 | 0.0349 |
+| Jev easy | 48 | 100.00 | 100.00 | 0.18 | 0.0018 | 0.0001 |
+| Jev hard | 111 | 43.24 | 40.54 | 40.97 | 1.7898 | 0.8820 |
+| Jabr | 866 | 82.79 | 78.41 | 8.85 | 0.5168 | 0.2645 |
+| VitaminC | 599 | 81.97 | 50.92 | 12.86 | 0.8070 | 0.3185 |
+| MASSIVE en | 348 | 83.62 | 81.03 | 10.53 | 0.6803 | 0.2775 |
+| MASSIVE de | 348 | 81.03 | 72.13 | 10.34 | 0.7456 | 0.2983 |
+| SQuAD2 | 299 | 75.59 | 85.28 | 16.67 | 0.6731 | 0.3880 |
+| Civil Comments | 300 | 91.00 | 72.67 | 4.67 | 0.2559 | 0.1447 |
+| HelpSteer2 | 249 | 37.35 | 35.34 | 32.77 | 1.8759 | 0.8801 |
+| SummEval relevance | 237 | 13.92 | 16.88 | 56.74 | 2.1045 | 1.1539 |
+| SummEval consistency | 144 | 84.03 | 84.03 | 6.57 | 0.6620 | 0.2697 |
+| PubMedQA | 250 | 51.20 | 53.20 | 26.94 | 1.2007 | 0.6668 |
+| ContractNLI | 1819 | 67.12 | 51.73 | 13.44 | 0.8789 | 0.4691 |
+
+| Dream-S1 Breadth-v1：全14 datasets | Main metric | Final score% | Zero score% | Coverage% | Final ECE10% | Final NLL | Final Brier |
+|---|---|---:|---:|---:|---:|---:|---:|
+| MuSR | accuracy | 52.00 | 48.67 | 100 | 24.18 | 1.4262 | 0.7100 |
+| SATA | case-exact | 28.67 | 14.00 | 100 | 11.60 | 0.5102 | 0.3046 |
+| Chess | accuracy | 13.33 | 11.33 | 100 | 17.64 | 2.2971 | 0.9197 |
+| ContractNLI | accuracy | 42.50 | 31.25 | 87.5 | 25.19 | 1.2462 | 0.6984 |
+| HellaSwag | accuracy | 64.67 | 76.00 | 100 | 22.28 | 1.2847 | 0.5679 |
+| CLINC | accuracy | 96.67 | 94.00 | 100 | 2.10 | 0.0911 | 0.0476 |
+| SGD | accuracy | 89.33 | 64.00 | 100 | 5.49 | 0.3212 | 0.1716 |
+| BRIGHT | accuracy | 56.67 | 42.00 | 100 | 12.82 | 1.2282 | 0.5751 |
+| BFCL | case-exact | 86.00 | 83.33 | 100 | 2.71 | 0.2334 | 0.1435 |
+| ToolRet | accuracy | 51.33 | 55.33 | 100 | 30.21 | 2.0699 | 0.7457 |
+| API-Bank | accuracy | 88.00 | 89.33 | 100 | 6.15 | 0.4891 | 0.1920 |
+| RouterBench | accuracy | 27.33 | 24.67 | 100 | 16.37 | 1.7761 | 0.8099 |
+| Humicroedit | accuracy | 46.67 | 56.00 | 100 | 35.14 | 1.3957 | 0.7981 |
+| cfcolor | accuracy | 52.67 | 48.67 | 100 | 19.47 | 0.8388 | 0.5985 |
+
+| Dream-S1覆盖与概率分母 | Attempted | Successful | Unsupported length | Common n | 说明 |
+|---|---:|---:|---:|---:|---|
+| Core14 | 5945 | 5724 | 221 | 5690 | 全超长在Contract；all-attempted宏ACC70.20399%，共同成功70.72% |
+| Core ContractNLI | 2074 | 1853 | 221 | 1819 | 自身success1242/1853=67.02644%；all-attempted1242/2074=59.88428% |
+| Breadth full test | 3089 questions / 1990 records | 3069 questions | 20 | - | 全unsupported计错；SATA/BFCL case-exact，其余12 question accuracy |
+| Breadth ContractNLI | 160 | 140 | 20 | - | main68/160=42.50%；answered68/140=48.5714% |
+
+| Dream-S1 Breadth pooled answered / index | Final | Zero | 限制 / 方向 |
+|---|---:|---:|---|
+| Official index | 36.2081603223 | 31.5401768589 | delta+4.6679834634；95% paired CI[1.3452,7.8761] |
+| Final index 95% CI | [33.9340,39.1567] | - | 官方record-bootstrap2000 seed0；非训练seed不确定性 |
+| ECE10 (%) | 13.54928 | 5.67067 | 变差 |
+| Exact logit NLL | 0.88802267 | 0.81912338 | 变差 |
+| Brier(sum) | 0.44269084 | 0.46552760 | 改善 |
+| Final mean confidence / answered ACC (%) | 81.1283 / 67.5790 | - | 过度自信，不以index掩盖概率退化 |
+
+| Dream-S1补充诊断与解释边界 | Final | Zero / 限制 |
+|---|---|---|
+| Pooled ordinal MAE，n841 | 0.72341388 | 0.85703560，改善 |
+| Pooled unnormalized RPS，n841 | 0.57144359 | 0.56081700，变差 |
+| Pooled soft CE / Brier，n310 | 0.34271238 / 0.07790246 | 0.59631268 / 0.28391100，改善 |
+| ECE/NLL定义 | Core15 `(lo,hi]`，NLL floor1e-12 | Breadth10 `[lo,hi)` 最后端点包含，exact logit NLL；不可混合 |
+| 暴露 / 因果 | 单seed，公开test已观察，Dream预训练未知 | S1 CLINC/SGD来源重叠未过滤；不作完全未见、普适改善或架构因果结论 |

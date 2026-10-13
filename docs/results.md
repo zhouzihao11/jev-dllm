@@ -6,7 +6,7 @@
 
 ## 后续已完成结果：Dream zero-shot 与 S1 校准
 
-[Dream-7B zero-shot](dream_zero_shot.md)新增固定Core14、5690共同成功ID比较：无项目微调、T1时等套ACC64.08%、ECE15 17.74%、NLL0.9186、Brier0.4817。相较0.6B base更好，与S1总体ACC接近，但不是纯规模因果或所有任务均改善；本页下方历史表保持不变。另见[S1六套全局温度校准](temperature_calibration.md)，其校准后概率指标不混入下方历史T1/HTTP表。这两项仅发布结果说明，没有改变公开默认运行入口；Dream后续微调不属于zero-shot结果。
+[Dream-7B zero-shot](dream_zero_shot.md)新增固定Core14、5690共同成功ID比较：无项目微调、T1时等套ACC64.08%、ECE15 17.74%、NLL0.9186、Brier0.4817。相较0.6B base更好，与S1总体ACC接近，但不是纯规模因果或所有任务均改善；本页下方历史表保持不变。另见[S1六套全局温度校准](temperature_calibration.md)，其校准后概率指标不混入下方历史T1/HTTP表。这两项原仅发布结果说明；后续 [Dream-S1](dream_s1.md) 已迁移训练和原生评测源码、记录Core14/Breadth聚合结果，但新发布迁移尚待远程验证。默认quickstart/HTTP不变，Dream后续微调不属于zero-shot结果。
 
 ## Kev-0.8B：来源筛选后的比较
 

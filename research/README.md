@@ -10,6 +10,9 @@
 | `scripts/shared_yesno_synthetic.py`、`scripts/shared_yesno_s1_synthetic.py` | 有限规则/状态/概率任务 |
 | `scripts/check_shared_yesno_labels.py` | S0 数据标签检查 |
 | `scripts/train_qwen_masked_typed.py` | DDP 训练；配方指定 supervised/shared_yesno |
+| `scripts/train_dream_masked_typed.py` | 原生 Dream BF16 FULL_SHARD 训练；原始 S1 数据 / dev KL 选择；见 [Dream-S1](../docs/dream_s1.md) |
+| `scripts/dream_training.py` | 小型 CandidateWrapper / memory helper，复用公开 Yes/No projection |
+| `scripts/verify_dream_export.py` | 独立 Dream export 复载和重复 dev 差异报告 |
 | `scripts/shared_yesno_supervised.py` | canonical loader、监督损失、内部评测 |
 | `scripts/bench_diff_yesno.py` | 底层 DLLM 外部 batch 1/32 评测；通常由统一 runner 调用 |
 | `scripts/bench_laya_aligned.py` | Laya 原生头、输入与温度对齐评测 |

@@ -170,8 +170,11 @@ def input_bundle(root):
     legacy_typed = (manifest.get("profile_id") == "legacy_typed_decisions_v1"
                     and manifest.get("dataset_scope") == "legacy_typed_decisions_not_audited_core"
                     and manifest.get("source_profile_id") == "full_test_v1_20260923_r2")
+    breadth = (manifest.get("profile_id") in ("breadth-v1__development", "breadth-v1__test")
+               and manifest.get("dataset_scope") == "breadth_external_full_original"
+               and manifest.get("source_profile_id") == "breadth-v1")
     require(manifest.get("schema_version") == "benchmark_core_v1"
-            and (manifest.get("profile_id") == "core_v1_candidate" or legacy_typed),
+            and (manifest.get("profile_id") == "core_v1_candidate" or legacy_typed or breadth),
             "Wrong bundle schema/profile")
     data = rows(bundled(root, manifest["files"]["inputs"]))
     indexed(data)
@@ -191,10 +194,18 @@ def input_bundle(root):
     return manifest, data
 
 
-def selected_inputs(data, smoke, limit):
+def selected_inputs(data, smoke, limit, suites=None):
     require(type(limit) is int and limit > 0, "Smoke limit must be positive")
+    if suites is not None:
+        require(isinstance(suites, list) and bool(suites)
+                and all(isinstance(name, str) for name in suites)
+                and len(set(suites)) == len(suites)
+                and set(suites) <= {row["suite"] for row in data},
+                "Unknown or repeated --suites")
     counts, selected = Counter(), []
     for row in data:
+        if suites is not None and row["suite"] not in suites:
+            continue
         counts[row["suite"]] += 1
         if not smoke or counts[row["suite"]] <= limit:
             selected.append(row)

@@ -77,7 +77,7 @@ def _spread_indices(items, limit):
     return sorted(selected)
 
 
-def load_structured_items(path, tok, max_length, yesno_tokens, limit=0):
+def load_structured_items(path, tok, max_length, yesno_tokens, limit=0, renderer=None):
     """Read canonical one-question JSONL; preserve display order and lineage.
 
     Split tags must be consistent within the file, but dev/test are allowed.
@@ -86,6 +86,8 @@ def load_structured_items(path, tok, max_length, yesno_tokens, limit=0):
     """
     from bench_diff_yesno import decision_input
 
+    if renderer is None:
+        renderer = decision_input
     if max_length < 1 or limit < 0:
         raise ValueError("max_length must be positive and limit nonnegative")
     mapping, mask_id, mask_text = yesno_tokens
@@ -154,7 +156,7 @@ def load_structured_items(path, tok, max_length, yesno_tokens, limit=0):
                     raise ValueError("unknown target kind")
                 if kind == "hard" and (target.count(1) != 1 or any(x not in (0, 1) for x in target)):
                     raise ValueError("hard target must be one-hot")
-                ids, positions, options, prompt = decision_input(
+                ids, positions, options, prompt = renderer(
                     tok, row["state"], q, mask_id, mask_text, max_length)
                 if len(options) != len(target) or len(positions) != (1 if primitive == "noul" else len(target)):
                     raise ValueError("target/options/masks mismatch")

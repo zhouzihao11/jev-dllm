@@ -18,7 +18,7 @@ def log(message):
 def infer(args):
     started = time.monotonic()
     manifest, all_rows = input_bundle(args.data_root)
-    data = selected_inputs(all_rows, args.smoke, args.smoke_limit)
+    data = selected_inputs(all_rows, args.smoke, args.smoke_limit, args.suites)
     output = args.output_dir.expanduser().resolve()
     info = dict(status="running", profile_id=manifest["profile_id"],
                 expected_ids=[r["id"] for r in data], attempted=0,
@@ -31,6 +31,8 @@ def infer(args):
         log(f"Loading backend={args.backend} model={args.model_path} device={args.device}")
         if args.backend == "kev":
             from adapters.kev import Adapter
+        elif args.backend == "dream":
+            from adapters.dream import Adapter
         else:
             from adapters.inherited import Adapter
 
@@ -43,6 +45,8 @@ def infer(args):
                 (output / "batches.jsonl").open("x", encoding="utf-8") as batches:
             batch_id = 0
             for spec in manifest["suites"]:
+                if args.suites is not None and spec["name"] not in args.suites:
+                    continue
                 suite_rows = [r for r in data if r["suite"] == spec["name"]]
                 suite_started = time.monotonic()
                 suite_ok = suite_unsupported = 0
@@ -101,7 +105,7 @@ def infer(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-root", required=True, type=Path)
-    parser.add_argument("--backend", required=True, choices=("dllm", "laya", "kev"))
+    parser.add_argument("--backend", required=True, choices=("dllm", "laya", "kev", "dream"))
     parser.add_argument("--backend-python", type=Path, help="Python for inference only; scoring uses this interpreter")
     parser.add_argument("--kev-source", type=Path, help="Local checkout containing the native kev package")
     parser.add_argument("--base-path", type=Path, help="Existing local Kev base weights")
@@ -114,6 +118,7 @@ def main():
     parser.add_argument("--max-length", type=int, default=4096)
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--smoke-limit", type=int, default=3)
+    parser.add_argument("--suites", nargs="+", help="Select named suites in bundle order; default is all suites")
     parser.add_argument("--log-every-batches", type=int, default=10,
                         help="Print progress every N completed batches, plus suite boundaries")
     parser.add_argument("--predict-only", action="store_true")
@@ -121,6 +126,9 @@ def main():
     args = parser.parse_args()
     require(min(args.batch_size, args.max_length, args.smoke_limit, args.log_every_batches) > 0,
             "Budgets and log interval must be positive")
+    if args.backend == "dream":
+        require(args.batch_size == 1, "Dream requires --batch-size 1")
+        require(Path(args.model_path).expanduser().is_dir(), "Dream requires an existing local checkpoint directory")
     if args.backend == "kev":
         require(args.backend_python is not None and args.kev_source is not None and args.base_path is not None,
                 "Kev requires --backend-python, --kev-source and --base-path")
@@ -135,7 +143,7 @@ def main():
         infer(args)
         return 0
     manifest, data = input_bundle(args.data_root)
-    expected = selected_inputs(data, args.smoke, args.smoke_limit)
+    expected = selected_inputs(data, args.smoke, args.smoke_limit, args.suites)
     output = args.output_dir.expanduser().absolute()
     output.mkdir(exist_ok=False)
     run = dict(schema_version="benchmark_core_run_v1", profile_id=manifest["profile_id"],
@@ -146,6 +154,11 @@ def main():
                requested_dtype=args.dtype, batch_size=args.batch_size, max_length=args.max_length,
                expected_ids=[r["id"] for r in expected], predict_only=args.predict_only,
                phases=dict(inference="pending", scoring="not_requested" if args.predict_only else "pending"))
+    selected_suites = None
+    if args.suites is not None:
+        selected_suites = [spec["name"] for spec in manifest["suites"] if spec["name"] in args.suites]
+        run["selected_suites"] = selected_suites
+        run["selection"] = "smoke prefix only" if args.smoke else "selected retained suite run"
     save(output / "run.json", run)
     log(f"Evaluation START profile={manifest['profile_id']} decisions={len(expected)} "
         f"smoke={args.smoke} output={output}")
@@ -156,6 +169,8 @@ def main():
                "--device", args.device, "--dtype", args.dtype, "--batch-size", str(args.batch_size),
                "--max-length", str(args.max_length), "--smoke-limit", str(args.smoke_limit),
                "--log-every-batches", str(args.log_every_batches)]
+    if selected_suites is not None:
+        command.extend(["--suites", *selected_suites])
     if args.backend_python:
         command.extend(["--backend-python", backend_python])
     if args.backend == "kev":
